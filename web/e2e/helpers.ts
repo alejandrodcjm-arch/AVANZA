@@ -10,7 +10,7 @@ async function latestCode(email: string, after: number): Promise<string> {
       if (r.ok) {
         const j = (await r.json()) as { messages?: { ID: string; Created: string; Subject: string }[] };
         const m = j.messages?.[0];
-        if (m && new Date(m.Created).getTime() >= after - 2000) {
+        if (m && new Date(m.Created).getTime() >= after - 500) {
           const code = m.Subject.match(/\b(\d{6})\b/)?.[1];
           if (code) return code;
         }
@@ -18,7 +18,7 @@ async function latestCode(email: string, after: number): Promise<string> {
         const box = email.split("@")[0];
         const list = (await (await fetch(`${MAIL}/api/v1/mailbox/${box}`)).json()) as { id: string; subject: string; date: string }[];
         const m = list.at(-1);
-        if (m && new Date(m.date).getTime() >= after - 2000) {
+        if (m && new Date(m.date).getTime() >= after - 500) {
           const code = m.subject.match(/\b(\d{6})\b/)?.[1];
           if (code) return code;
         }

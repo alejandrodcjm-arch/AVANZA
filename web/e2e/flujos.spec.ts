@@ -39,8 +39,11 @@ test("la maestra pasa lista tocando solo las excepciones", async ({ page }) => {
   // Un día hábil fijo del seed para que la prueba no dependa del día en que corre.
   await page.goto("/maestro/grupos/33333333-3333-3333-3333-333333333331/lista?fecha=2026-11-24");
   await expect(page.getByText(/presentes ·/)).toBeVisible();
-  await page.getByRole("button", { name: "Falta" }).first().click();
-  await expect(page.getByText(/1 falta/)).toBeVisible();
+  // El seed ya trae faltas ese día: se parte de "todos presentes" y se marca una sola.
+  await page.getByRole("button", { name: "Todos presentes" }).click();
+  await expect(page.getByText(/· 0 faltas ·/)).toBeVisible();
+  await page.getByRole("button", { name: "Falta", exact: true }).first().click();
+  await expect(page.getByText(/· 1 falta ·/)).toBeVisible();
   await page.getByRole("button", { name: /Guardar/ }).click();
   await expect(page.getByText("Lista guardada.")).toBeVisible();
 });

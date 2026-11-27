@@ -37,8 +37,8 @@ enable_signup = false
 enable_anonymous_sign_ins = false
 
 [auth.rate_limit]
-email_sent = 30
-token_verifications = 30
+email_sent = 200
+token_verifications = 200
 
 [auth.email]
 enabled = true
@@ -46,7 +46,9 @@ double_confirm_changes = true
 enable_confirmations = false
 otp_length = 6
 otp_expiry = 900
-max_frequency = "30s"
+# En local/CI se permite pedir otro código casi de inmediato (las pruebas entran varias veces seguidas).
+# En producción use 60s (panel de Supabase > Authentication > Rate Limits).
+max_frequency = "1s"
 
 [auth.email.template.magic_link]
 subject = "Su código para entrar a Avanza: {{ .Token }}"
