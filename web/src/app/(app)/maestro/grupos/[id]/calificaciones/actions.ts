@@ -5,9 +5,9 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
-  subjectId: z.uuid(),
-  periodId: z.uuid(),
-  scores: z.record(z.uuid(), z.union([z.number().min(5).max(10), z.null()])),
+  subjectId: z.guid(),
+  periodId: z.guid(),
+  scores: z.record(z.guid(), z.union([z.number().min(5).max(10), z.null()])),
 });
 
 export async function saveGrades(groupId: string, input: z.infer<typeof schema>) {

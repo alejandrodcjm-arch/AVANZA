@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-const schema = z.object({ title: z.string().trim().min(3).max(200), subject_id: z.uuid(), due_on: z.iso.date() });
+const schema = z.object({ title: z.string().trim().min(3).max(200), subject_id: z.guid(), due_on: z.iso.date() });
 
 export async function createAssignment(groupId: string, _p: { error: string }, form: FormData) {
   const parsed = schema.safeParse(Object.fromEntries(form));
@@ -23,7 +23,7 @@ export async function createAssignment(groupId: string, _p: { error: string }, f
 }
 
 export async function saveMisses(groupId: string, assignmentId: string, studentIds: string[]) {
-  const ids = z.array(z.uuid()).safeParse(studentIds);
+  const ids = z.array(z.guid()).safeParse(studentIds);
   if (!ids.success) return { ok: false, error: "Datos inválidos." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_assignment_misses", { p_assignment: assignmentId, p_students: ids.data });

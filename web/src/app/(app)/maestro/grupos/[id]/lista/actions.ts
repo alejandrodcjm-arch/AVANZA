@@ -7,7 +7,7 @@ import { todayLocal } from "@/lib/time";
 
 const schema = z.object({
   date: z.iso.date(),
-  exceptions: z.record(z.uuid(), z.enum(["absent", "late", "excused"])),
+  exceptions: z.record(z.guid(), z.enum(["absent", "late", "excused"])),
 });
 
 export async function saveAttendance(groupId: string, input: { date: string; exceptions: Record<string, string> }) {

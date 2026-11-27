@@ -139,7 +139,7 @@ export async function addGroup(_p: Res, form: FormData): Promise<Res> {
 /** Reemplaza quién da cada materia en un grupo. assignments: {subjectId: teacherId | ""}; homeroom: teacherId titular. */
 export async function saveGroupTeachers(groupId: string, assignments: Record<string, string>, homeroom: string): Promise<Res> {
   const { membership } = await requireRole("director");
-  const ids = z.record(z.uuid(), z.union([z.uuid(), z.literal("")])).safeParse(assignments);
+  const ids = z.record(z.guid(), z.union([z.guid(), z.literal("")])).safeParse(assignments);
   if (!ids.success) return { ok: false, error: "Datos inválidos." };
   const supabase = await createClient();
   const rows = Object.entries(ids.data)
