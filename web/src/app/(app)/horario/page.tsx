@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { ScheduleView, type ViewBlock } from "@/components/schedule-view";
+import { PrintButton } from "@/components/print-button";
+import { WeekTable, type WeekBlock } from "@/components/week-table";
 import { ButtonLink, Card, Empty, PageHeader } from "@/components/ui";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -24,15 +25,15 @@ export default async function SchedulePage() {
     const mine = new Set(groups.flatMap((g) => g.subjects.map((s) => `${g.id}:${s.id}`)));
     const label = new Map(groups.map((g) => [g.id, g.label]));
     const { data } = groups.length ? await supabase.from("schedule_blocks").select(cols).in("group_id", groups.map((g) => g.id)) : { data: [] };
-    const blocks: ViewBlock[] = ((data ?? []) as Row[])
+    const blocks: WeekBlock[] = ((data ?? []) as Row[])
       .filter((b) => b.subject_id && mine.has(`${b.group_id}:${b.subject_id}`))
-      .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: `${b.subjects?.name} · ${label.get(b.group_id)}`, sub: b.room, isSubject: true }));
+      .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: label.get(b.group_id) ?? "", sub: [b.subjects?.name, b.room].filter(Boolean).join(" · "), isSubject: true, colorKey: b.group_id }));
     return (
       <>
-        <PageHeader title="Mi horario" subtitle="Sus clases de la semana en todos sus grupos." back="/maestro" />
+        <PageHeader title="Mi horario" subtitle="Sus clases de la semana en todos sus grupos." back="/maestro" action={blocks.length ? <PrintButton label="Imprimir" /> : undefined} />
         {blocks.length ? (
           <Card>
-            <ScheduleView blocks={blocks} todayWeekday={todayWd} />
+            <WeekTable blocks={blocks} todayWeekday={todayWd} />
           </Card>
         ) : (
           <Empty title="Dirección aún no carga los horarios">Cuando los suba, aquí verá sus clases y podrá tenerlas en su calendario.</Empty>
@@ -61,19 +62,19 @@ export default async function SchedulePage() {
 
   return (
     <>
-      <PageHeader title="Horario" subtitle="Qué clase tiene cada día. Útil para preparar la mochila la noche anterior." />
+      <PageHeader title="Horario" subtitle="La semana completa de su hijo o hija. Útil para preparar la mochila la noche anterior." action={children.length ? <PrintButton label="Imprimir" /> : undefined} />
       {children.length === 0 && <Empty title="Aún no hay alumnos ligados a su cuenta" />}
       <div className="space-y-4">
         {children.map((c) => {
-          const blocks: ViewBlock[] = rows
+          const blocks: WeekBlock[] = rows
             .filter((b) => b.group_id === c.groupId)
-            .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: b.subjects?.name ?? b.label ?? "", sub: b.room, isSubject: Boolean(b.subject_id) }));
+            .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: b.subjects?.name ?? b.label ?? "", sub: b.room, isSubject: Boolean(b.subject_id), colorKey: b.subject_id }));
           return (
-            <Card key={c.id}>
+            <Card key={c.id} className="print-avoid print:shadow-none print:ring-0">
               <h2 className="mb-3 text-lg font-semibold">
                 {c.name} <span className="font-normal text-muted">· {c.group}</span>
               </h2>
-              {blocks.length ? <ScheduleView blocks={blocks} todayWeekday={todayWd} /> : <p className="text-muted">La escuela aún no ha cargado el horario de este grupo.</p>}
+              {blocks.length ? <WeekTable blocks={blocks} todayWeekday={todayWd} /> : <p className="text-muted">La escuela aún no ha cargado el horario de este grupo.</p>}
             </Card>
           );
         })}

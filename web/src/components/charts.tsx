@@ -40,140 +40,116 @@ export function BarList({ items, unit = "", max, empty = "Sin datos en este peri
   );
 }
 
-/** Columnas verticales con valor en el tope y tooltip al pasar el dedo o el cursor. */
-export function Columns({ items, unit = "", height = 160, label }: { items: Item[]; unit?: string; height?: number; label: string }) {
+function niceMax(v: number) {
+  if (v <= 0) return 1;
+  const p = 10 ** Math.floor(Math.log10(v));
+  const n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+
+function useWidth(min = 260) {
+  const ref = useRef<HTMLElement>(null);
+  const [w, setW] = useState(640);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(min, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [min]);
+  return [ref, w] as const;
+}
+
+/**
+ * Columnas con eje en cero, rejilla suave, línea de referencia opcional y lectura al pasar el cursor o el dedo.
+ * Una sola serie en un color; ámbar solo para "requiere atención" (y se dice en la lectura).
+ */
+export function Columns({ items, unit = "", height = 200, label, target, max }: { items: Item[]; unit?: string; height?: number; label: string; target?: { y: number; label: string }; max?: number }) {
+  const id = useId();
+  const [box, W] = useWidth();
   const [hover, setHover] = useState<number | null>(null);
   if (!items.length) return <p className="text-muted">Sin datos en este periodo.</p>;
-  const top = Math.max(...items.map((i) => i.value), 1);
-  const w = 100 / items.length;
+  const H = height;
+  const pad = { l: 36, r: 12, t: 16, b: 26 };
+  const top = max ?? niceMax(Math.max(...items.map((i) => i.value), target?.y ?? 0));
+  const Y = (v: number) => pad.t + (1 - v / top) * (H - pad.t - pad.b);
+  const slot = (W - pad.l - pad.r) / items.length;
+  const bw = Math.max(4, Math.min(36, slot * 0.68));
+  const X = (i: number) => pad.l + slot * i + slot / 2;
+  const ticks = [0, top / 2, top];
+  const every = Math.ceil(items.length / Math.max(1, Math.floor((W - pad.l) / 46)));
+  const fmt = (v: number) => (Number.isInteger(v) ? v : v.toFixed(1)) + unit;
+  const h = hover !== null ? items[hover] : null;
+
   return (
-    <figure aria-label={label} className="relative">
-      <div className="flex items-end gap-[2px] border-b border-[#ddd6ca]" style={{ height }}>
-        {items.map((it, i) => (
-          <button
-            type="button"
-            key={it.label}
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(null)}
-            onFocus={() => setHover(i)}
-            onBlur={() => setHover(null)}
-            aria-label={`${it.label}: ${it.value}${unit}`}
-            className="flex h-full flex-col items-center justify-end"
-            style={{ width: `${w}%` }}
-          >
-            <span className="num mb-1 text-xs font-semibold text-ink">{it.value > 0 ? `${it.value}${unit}` : ""}</span>
-            <span
-              className="w-full max-w-6 rounded-t-[4px]"
-              style={{ height: `${(Math.max(0, it.value) / top) * (height - 22)}px`, background: it.attention ? ATTENTION : SERIES, opacity: hover === null || hover === i ? 1 : 0.55 }}
-            />
-          </button>
+    <figure ref={box} aria-label={label} className="relative">
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block w-full touch-none" role="img" aria-labelledby={`${id}-t`} onPointerLeave={() => setHover(null)}>
+        <title id={`${id}-t`}>{`${label}: ${items.map((i) => `${i.label} ${fmt(i.value)}`).join(", ")}`}</title>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={pad.l} x2={W - pad.r} y1={Y(t)} y2={Y(t)} stroke={GRID} strokeWidth={1} />
+            <text x={pad.l - 6} y={Y(t) + 4} textAnchor="end" fontSize={11} fill={INK2}>
+              {fmt(t)}
+            </text>
+          </g>
         ))}
-      </div>
-      <div className="mt-1 flex gap-[2px]">
-        {items.map((it) => (
-          <span key={it.label} className="truncate text-center text-[11px] text-muted" style={{ width: `${w}%` }}>
-            {it.label}
-          </span>
-        ))}
-      </div>
-      {hover !== null && items[hover].hint && (
-        <figcaption className="pointer-events-none absolute top-0 right-0 rounded-lg bg-card px-3 py-2 text-sm shadow ring-1 ring-line">
-          <strong className="num">
-            {items[hover].value}
-            {unit}
-          </strong>{" "}
-          <span className="text-muted">{items[hover].hint}</span>
+        {items.map((it, i) => {
+          const y = Y(Math.max(0, it.value));
+          const hgt = H - pad.b - y;
+          return (
+            <g key={it.label + i} onPointerEnter={() => setHover(i)} onPointerDown={() => setHover(i)}>
+              <rect x={X(i) - slot / 2} y={pad.t} width={slot} height={H - pad.t - pad.b} fill="transparent" />
+              {hgt > 0 && (
+                <path
+                  d={`M${X(i) - bw / 2},${H - pad.b} V${y + Math.min(4, hgt)} q0,-4 4,-4 H${X(i) + bw / 2 - 4} q4,0 4,4 V${H - pad.b} Z`}
+                  fill={it.attention ? ATTENTION : SERIES}
+                  opacity={hover === null || hover === i ? 1 : 0.45}
+                />
+              )}
+              {i % every === 0 && (
+                <text x={X(i)} y={H - 8} textAnchor="middle" fontSize={11} fill={INK2}>
+                  {it.label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {target && (
+          <g>
+            <line x1={pad.l} x2={W - pad.r} y1={Y(target.y)} y2={Y(target.y)} stroke={INK} strokeWidth={1} strokeDasharray="4 4" strokeOpacity={0.55} />
+            <text x={W - pad.r} y={Y(target.y) - 5} textAnchor="end" fontSize={11} fill={INK2}>
+              {target.label}
+            </text>
+          </g>
+        )}
+        {h && hover !== null && <line x1={X(hover)} x2={X(hover)} y1={pad.t} y2={H - pad.b} stroke={INK2} strokeOpacity={0.25} />}
+      </svg>
+      {h && (
+        <figcaption className="pointer-events-none absolute top-0 left-10 rounded-lg bg-card px-3 py-1.5 text-sm shadow ring-1 ring-line">
+          <strong className="num">{fmt(h.value)}</strong> <span className="text-muted">{h.hint ?? h.label}</span>
+          {h.attention && <span className="text-[#7a4f0f]"> · atención</span>}
         </figcaption>
       )}
     </figure>
   );
 }
 
-/** Línea en el tiempo (ej. % de asistencia diaria) con cruz y lectura al pasar el cursor o el dedo. */
-export function LineChart({ points, unit = "", min, max, label, target }: { points: { x: string; label: string; y: number }[]; unit?: string; min?: number; max?: number; label: string; target?: { y: number; label: string } }) {
-  const id = useId();
-  const ref = useRef<SVGSVGElement>(null);
-  const box = useRef<HTMLElement>(null);
-  const [hover, setHover] = useState<number | null>(null);
-  // El SVG mide lo mismo que su contenedor: los textos conservan su tamaño real en celular y en escritorio.
-  const [W, setW] = useState(640);
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.max(260, Math.round(e.contentRect.width))));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  if (points.length < 2) return <p className="text-muted">Se necesitan al menos dos días con datos.</p>;
-  const H = W < 480 ? 180 : 210;
-  const pad = { l: 34, r: 44, t: 12, b: 22 };
-  const ys = points.map((p) => p.y);
-  const lo = min ?? Math.floor(Math.min(...ys) - 2);
-  const hi = max ?? Math.ceil(Math.max(...ys) + 1);
-  const X = (i: number) => pad.l + (i * (W - pad.l - pad.r)) / (points.length - 1);
-  const Y = (v: number) => pad.t + ((hi - v) * (H - pad.t - pad.b)) / (hi - lo || 1);
-  const d = points.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ");
-  const area = `${d} L${X(points.length - 1)},${H - pad.b} L${X(0)},${H - pad.b} Z`;
-  const ticks = [lo, (lo + hi) / 2, hi].map((t) => Math.round(t));
-  const last = points[points.length - 1];
-
-  const onMove = (e: React.PointerEvent) => {
-    const r = ref.current!.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * W;
-    const i = Math.round(((x - pad.l) / (W - pad.l - pad.r)) * (points.length - 1));
-    setHover(Math.max(0, Math.min(points.length - 1, i)));
-  };
-
+/** Avance hacia una meta (cobranza, captura, familias activas). */
+export function Meter({ value, max = 100, label, detail, goal }: { value: number; max?: number; label: string; detail?: string; goal?: number }) {
+  const pct = Math.max(0, Math.min(100, (100 * value) / (max || 1)));
+  const low = goal !== undefined && pct < goal;
   return (
-    <figure ref={box} aria-label={label} className="relative">
-      <svg ref={ref} viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block w-full touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-labelledby={`${id}-t`}>
-        <title id={`${id}-t`}>{`${label}. Último: ${last.y}${unit} (${last.label}).`}</title>
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={pad.l} x2={W - pad.r} y1={Y(t)} y2={Y(t)} stroke={GRID} strokeWidth={1} />
-            <text x={pad.l - 6} y={Y(t) + 4} textAnchor="end" fontSize={11} fill={INK2}>
-              {t}
-            </text>
-          </g>
-        ))}
-        {target && (
-          <g>
-            <line x1={pad.l} x2={W - pad.r} y1={Y(target.y)} y2={Y(target.y)} stroke={INK2} strokeWidth={1} strokeOpacity={0.5} />
-            <text x={W - pad.r + 4} y={Y(target.y) + 4} fontSize={10} fill={INK2}>
-              {target.label}
-            </text>
-          </g>
-        )}
-        <path d={area} fill={SERIES} fillOpacity={0.1} />
-        <path d={d} fill="none" stroke={SERIES} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={X(points.length - 1)} cy={Y(last.y)} r={4.5} fill={SERIES} stroke="#fff" strokeWidth={2} />
-        <text x={X(points.length - 1) + 8} y={Y(last.y) + 4} fontSize={12} fontWeight={600} fill={INK}>
-          {last.y}
-          {unit}
-        </text>
-        <text x={pad.l} y={H - 4} fontSize={11} fill={INK2}>
-          {points[0].label}
-        </text>
-        <text x={W - pad.r} y={H - 4} fontSize={11} fill={INK2} textAnchor="end">
-          {last.label}
-        </text>
-        {hover !== null && (
-          <g>
-            <line x1={X(hover)} x2={X(hover)} y1={pad.t} y2={H - pad.b} stroke={INK2} strokeWidth={1} />
-            <circle cx={X(hover)} cy={Y(points[hover].y)} r={5} fill={SERIES} stroke="#fff" strokeWidth={2} />
-          </g>
-        )}
-      </svg>
-      {hover !== null && (
-        <figcaption className="pointer-events-none absolute top-0 left-10 rounded-lg bg-card px-3 py-1.5 text-sm shadow ring-1 ring-line">
-          <strong className="num">
-            {points[hover].y}
-            {unit}
-          </strong>{" "}
-          <span className="text-muted">{points[hover].label}</span>
-        </figcaption>
-      )}
-    </figure>
+    <div>
+      <div className="flex items-baseline justify-between gap-2 text-sm">
+        <span className="text-ink">{label}</span>
+        <span className="num font-semibold text-ink">{Math.round(pct)}%</span>
+      </div>
+      <div className="relative mt-1 h-2.5 rounded-full bg-[#efeae1]" role="meter" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
+        <div className="h-2.5 rounded-full" style={{ width: `${pct}%`, background: low ? ATTENTION : SERIES }} />
+        {goal !== undefined && <span className="absolute -top-0.5 h-3.5 w-0.5 bg-ink/50" style={{ left: `${goal}%` }} aria-hidden />}
+      </div>
+      {detail && <p className="mt-1 text-xs text-muted">{detail}</p>}
+    </div>
   );
 }
 

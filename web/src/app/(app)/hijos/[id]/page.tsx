@@ -5,9 +5,10 @@ import { Badge, Button, Card, PageHeader, Stat, Trend } from "@/components/ui";
 import { WeekStrip } from "@/components/week-strip";
 import { requireRole } from "@/lib/auth";
 import { RECOGNITION } from "@/lib/convivencia";
-import { formatDate, formatMonth, formatScore, formatShortDate, plural } from "@/lib/format";
+import { formatDate, formatMoney, formatMonth, formatScore, formatShortDate, plural } from "@/lib/format";
 import type { Overview } from "@/lib/overview";
 import { createClient } from "@/lib/supabase/server";
+import { balance } from "@/lib/tuition";
 import { WEEKDAYS } from "@/lib/calendar/kinds";
 import { addDays, isWeekday, isoWeekday, localHour, monthStart, todayLocal } from "@/lib/time";
 import { markGoal } from "./actions";
@@ -37,12 +38,15 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
   let classDay = today;
   if (!isWeekday(classDay) || localHour() >= 14) do classDay = addDays(classDay, 1); while (!isWeekday(classDay));
   const dayLabel = classDay === today ? "Hoy le toca" : classDay === addDays(today, 1) ? "Mañana le toca" : `El ${WEEKDAYS[isoWeekday(classDay)].toLowerCase()} le toca`;
-  const [blocksRes, eventsRes] = await Promise.all([
+  const [blocksRes, eventsRes, chargesRes] = await Promise.all([
     o.group
       ? supabase.from("schedule_blocks").select("label, subjects(name)").eq("group_id", o.group.id).eq("weekday", isoWeekday(classDay)).order("starts_at")
       : Promise.resolve({ data: [] as { label: string | null; subjects: { name: string } | null }[] }),
     supabase.from("calendar_events").select("id, title, starts_on, group_id").gte("ends_on", today).lte("starts_on", addDays(today, 14)).order("starts_on").limit(8),
+    supabase.from("tuition_charges").select("concept, amount, paid, due_on").eq("student_id", id),
   ]);
+  const charges = (chargesRes.data ?? []).map((c) => ({ ...c, amount: Number(c.amount), paid: Number(c.paid) }));
+  const bal = balance(charges, today);
   const classes = [...new Set((blocksRes.data ?? []).filter((b) => b.subjects).map((b) => b.subjects!.name))];
   const upcoming = (eventsRes.data ?? []).filter((e) => !e.group_id || e.group_id === o.group?.id).slice(0, 4);
   const icon = (cat: string) => RECOGNITION.find((r) => r.key === cat)?.icon ?? "⭐";
@@ -51,7 +55,7 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader title={name} subtitle={[o.group?.label, o.period?.name].filter(Boolean).join(" · ")} back="/hijos" />
 
-      <div className="space-y-4">
+      <div className="gap-4 lg:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
         {/* La semana: lo primero que un papá quiere saber */}
         <Card>
           <div className="mb-3 flex items-baseline justify-between">
@@ -127,6 +131,23 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
             )}
           </div>
         </Card>
+
+        {charges.length > 0 && (
+          <Card>
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="font-semibold">Colegiaturas</h2>
+              <Link href="/pagos" className="min-h-10 content-center text-sm text-brand underline">
+                Estado de cuenta
+              </Link>
+            </div>
+            {bal.overdueCount === 0 ? <Badge tone="good">Al corriente</Badge> : <Badge tone="care">{bal.overdueCount === 1 ? "1 pago pendiente" : `${bal.overdueCount} pagos pendientes`}</Badge>}
+            {bal.next && (
+              <p className="mt-2 text-muted">
+                Siguiente: {bal.next.concept} · {formatMoney(Number(bal.next.amount) - Number(bal.next.paid))} · {formatShortDate(bal.next.due_on)}
+              </p>
+            )}
+          </Card>
+        )}
 
         {latest && (
           <Link href={`/hijos/${id}/resumenes/${latest.id}`} className="block">

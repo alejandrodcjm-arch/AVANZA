@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BottomNav, type NavItem } from "@/components/nav";
+import { MainFrame } from "@/components/main-frame";
+import { BottomNav, SideNav, type NavItem } from "@/components/nav";
 import { getSession, type Role } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,28 +44,48 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const items = NAV[session.active.role].map((i) => (i.href === "/avisos" ? { ...i, badge: count ?? 0 } : i));
 
+  const role = session.active.role;
+  const extra: NavItem[] = [
+    ...(role === "director" ? [{ href: "/calendario", label: "Calendario", icon: "calendar" as const }, { href: "/director/horarios", label: "Horarios", icon: "clock" as const }, { href: "/director/colegiaturas", label: "Colegiaturas", icon: "wallet" as const }] : []),
+    ...(role === "teacher" ? [{ href: "/horario", label: "Mi horario", icon: "clock" as const }] : []),
+    ...(role === "guardian" ? [{ href: "/horario", label: "Horario", icon: "clock" as const }] : []),
+    ...(role !== "guardian" ? [{ href: "/cuenta", label: "Cuenta", icon: "user" as const }] : []),
+  ];
+
   return (
-    <div className="mx-auto min-h-dvh max-w-3xl px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-28 md:pb-10">
-      <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted">
-        <Link href="/inicio" className="flex min-h-10 items-center gap-2 font-semibold text-brand">
-          <Image src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-lg" />
-          <span className="truncate">{session.active.schoolName}</span>
-        </Link>
-        <span className="flex items-center gap-3">
+    <>
+      <SideNav items={items} school={session.active.schoolName} extra={extra} />
+      <div className="lg:pl-60">
+        <MainFrame wide={role !== "guardian"}>
+          <header data-app-header className="mb-4 flex items-center justify-between gap-3 text-sm text-muted lg:hidden">
+            <Link href="/inicio" className="flex min-h-10 items-center gap-2 font-semibold text-brand">
+              <Image src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-lg" />
+              <span className="truncate">{session.active.schoolName}</span>
+            </Link>
+            <span className="flex items-center gap-3">
+              {session.memberships.length > 1 && (
+                <Link href="/cuenta#rol" className="min-h-10 content-center underline">
+                  Cambiar
+                </Link>
+              )}
+              {role !== "guardian" && (
+                <Link href="/cuenta" className="min-h-10 content-center underline">
+                  Cuenta
+                </Link>
+              )}
+            </span>
+          </header>
           {session.memberships.length > 1 && (
-            <Link href="/cuenta#rol" className="min-h-10 content-center underline">
-              Cambiar
-            </Link>
+            <div className="mb-2 hidden justify-end text-sm lg:flex print:hidden">
+              <Link href="/cuenta#rol" className="min-h-10 content-center text-muted underline">
+                Cambiar de escuela o rol
+              </Link>
+            </div>
           )}
-          {session.active.role !== "guardian" && (
-            <Link href="/cuenta" className="min-h-10 content-center underline">
-              Cuenta
-            </Link>
-          )}
-        </span>
+          <main>{children}</main>
+        </MainFrame>
+        <BottomNav items={items} />
       </div>
-      <main>{children}</main>
-      <BottomNav items={items} />
-    </div>
+    </>
   );
 }

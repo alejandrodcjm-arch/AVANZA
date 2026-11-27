@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "./ui";
@@ -32,15 +33,46 @@ function Icon({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
+// Activo = el elemento cuyo enlace es el prefijo más largo de la ruta actual.
+function currentHref(items: NavItem[], path: string) {
+  return items.filter((i) => path === i.href || path.startsWith(i.href + "/")).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
+/** Menú lateral en computadora (desde 1024 px). En celular se usa el menú inferior. */
+export function SideNav({ items, school, extra }: { items: NavItem[]; school: string; extra: NavItem[] }) {
+  const path = usePathname();
+  const current = currentHref([...items, ...extra], path);
+  const link = (it: NavItem) => (
+    <li key={it.href}>
+      <Link
+        href={it.href}
+        aria-current={it.href === current ? "page" : undefined}
+        className={cx("flex min-h-11 items-center gap-3 rounded-xl px-3 font-medium", it.href === current ? "bg-brand-soft text-brand" : "text-muted hover:bg-[#f3efe8] hover:text-ink")}
+      >
+        <Icon name={it.icon} />
+        <span className="flex-1">{it.label}</span>
+        {it.badge ? <span className="num rounded-full bg-care px-2 text-xs leading-5 text-white">{it.badge > 99 ? "99+" : it.badge}</span> : null}
+      </Link>
+    </li>
+  );
+  return (
+    <nav aria-label="Principal" className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-3 py-5 lg:flex print:hidden">
+      <Link href="/inicio" className="mb-6 flex items-center gap-2 px-2 font-semibold text-brand">
+        <Image src="/icons/icon-192.png" alt="" width={32} height={32} className="rounded-lg" />
+        <span className="leading-tight">{school}</span>
+      </Link>
+      <ul className="space-y-1">{items.map(link)}</ul>
+      <ul className="mt-auto space-y-1 border-t border-line pt-3">{extra.map(link)}</ul>
+    </nav>
+  );
+}
+
 export function BottomNav({ items }: { items: NavItem[] }) {
   const path = usePathname();
-  // Activo = el elemento cuyo enlace es el prefijo más largo de la ruta actual.
-  const current = items
-    .filter((i) => path === i.href || path.startsWith(i.href + "/"))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const current = currentHref(items, path);
   const active = (href: string) => href === current;
   return (
-    <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:static md:mb-6 md:rounded-card md:border md:pb-0">
+    <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden print:hidden">
       <ul className="mx-auto flex max-w-3xl">
         {items.map((it) => (
           <li key={it.href} className="flex-1">

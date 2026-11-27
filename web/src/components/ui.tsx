@@ -144,3 +144,39 @@ export function Trend({ delta }: { delta: number | null | undefined }) {
     </span>
   );
 }
+
+/** Indicador del tablero: etiqueta, número grande, contexto y enlace al detalle. */
+export function Kpi({ label, value, sub, tone, href, delta }: { label: string; value: ReactNode; sub?: ReactNode; tone?: "care" | "good"; href?: string; delta?: { text: string; good: boolean } | null }) {
+  const body = (
+    <div className={cx("h-full rounded-card bg-card p-4 shadow-sm ring-1 ring-line transition", href && "hover:ring-brand", tone === "care" && "ring-care/40")}>
+      <p className="text-sm font-medium text-muted">{label}</p>
+      <p className={cx("num mt-1 text-3xl font-bold tracking-tight", tone === "care" && "text-care", tone === "good" && "text-good")}>{value}</p>
+      {delta && <p className={cx("mt-0.5 text-sm font-medium", delta.good ? "text-good" : "text-[#7a4f0f]")}>{delta.text}</p>}
+      {sub && <p className="mt-0.5 text-sm text-muted">{sub}</p>}
+    </div>
+  );
+  return href ? (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
+}
+
+/** Encabezado de una tarjeta del tablero con enlace opcional a su reporte. */
+export function CardTitle({ children, href, linkText = "Ver detalle", sub }: { children: ReactNode; href?: string; linkText?: string; sub?: ReactNode }) {
+  return (
+    <div className="mb-3 flex items-start justify-between gap-3">
+      <div>
+        <h2 className="font-semibold">{children}</h2>
+        {sub && <p className="text-sm text-muted">{sub}</p>}
+      </div>
+      {href && (
+        <Link href={href} className="min-h-8 shrink-0 text-sm font-medium text-brand underline">
+          {linkText}
+        </Link>
+      )}
+    </div>
+  );
+}

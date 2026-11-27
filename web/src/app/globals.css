@@ -49,3 +49,12 @@ button, a, input, select, textarea {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Impresión: hoja horizontal, sin menús ni sombras */
+@media print {
+  @page { size: landscape; margin: 10mm; }
+  body { background: #fff; }
+  nav, header[data-app-header] { display: none !important; }
+  .print-break { break-after: page; }
+  .print-avoid { break-inside: avoid; }
+}

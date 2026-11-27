@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarList, LineChart } from "@/components/charts";
+import { BarList, Columns } from "@/components/charts";
 import { RangePicker } from "@/components/report-nav";
 import { Card, Empty, Stat } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
@@ -52,8 +52,12 @@ export default async function AttendanceReport({ searchParams }: { searchParams:
       </div>
 
       <Card>
-        <h2 className="mb-2 font-semibold">Asistencia diaria (% de alumnos presentes)</h2>
-        <LineChart label="Porcentaje de asistencia por día" unit="%" max={100} target={{ y: 90, label: "90%" }} points={r.daily.map((d) => ({ x: d.date, label: formatShortDate(d.date), y: Number(d.rate) }))} />
+        <h2 className="mb-2 font-semibold">Asistencia diaria: faltas por día</h2>
+        <Columns
+          label="Faltas por día"
+          height={220}
+          items={r.daily.map((d) => ({ label: formatShortDate(d.date).replace(/ de /, " ").replace(/\.$/, ""), value: d.absences, hint: `${formatShortDate(d.date)} · asistencia ${Number(d.rate).toFixed(1)}%` }))}
+        />
       </Card>
 
       <Card>
