@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { InviteForm } from "./invite-form";
@@ -26,7 +27,7 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
-      <img src="/icons/icon-192.png" alt="" width={56} height={56} className="mb-6 rounded-2xl" />
+      <Image src="/icons/icon-192.png" alt="" width={56} height={56} className="mb-6 rounded-2xl" />
       {p.valid ? (
         <>
           <h1 className="text-3xl font-bold">

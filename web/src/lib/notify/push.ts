@@ -1,5 +1,5 @@
 import "server-only";
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { env } from "@/lib/env";
 
 export type PushPayload = { title: string; body: string; url: string; tag?: string };

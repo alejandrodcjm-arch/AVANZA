@@ -20,6 +20,8 @@ export function PushSetup({ vapidKey }: { vapidKey?: string }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    queueMicrotask(detect);
+    function detect() {
     const ua = navigator.userAgent;
     const isIOS = /iPhone|iPad|iPod/.test(ua) || (ua.includes("Mac") && "ontouchend" in document);
     const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone;
@@ -30,6 +32,7 @@ export function PushSetup({ vapidKey }: { vapidKey?: string }) {
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setStatus(sub ? "on" : "off"))
       .catch(() => setStatus("off"));
+    }
   }, [vapidKey]);
 
   async function enable() {

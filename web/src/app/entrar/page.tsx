@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { LoginForm } from "./login-form";
@@ -9,7 +10,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (session) redirect("/inicio");
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
-      <img src="/icons/icon-192.png" alt="" width={56} height={56} className="mb-6 rounded-2xl" />
+      <Image src="/icons/icon-192.png" alt="" width={56} height={56} className="mb-6 rounded-2xl" />
       <h1 className="text-3xl font-bold">Avanza</h1>
       <p className="mt-1 mb-8 text-muted">Cómo va cada alumno, cada semana. Sin contraseñas: le enviamos un código a su correo.</p>
       <LoginForm next={siguiente} />

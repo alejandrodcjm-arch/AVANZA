@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BottomNav, type NavItem } from "@/components/nav";
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="mx-auto min-h-dvh max-w-3xl px-4 pt-[max(env(safe-area-inset-top),1rem)] pb-28 md:pb-10">
       <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted">
         <Link href="/inicio" className="flex min-h-10 items-center gap-2 font-semibold text-brand">
-          <img src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-lg" />
+          <Image src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-lg" />
           <span className="truncate">{session.active.schoolName}</span>
         </Link>
         {session.memberships.length > 1 && (
