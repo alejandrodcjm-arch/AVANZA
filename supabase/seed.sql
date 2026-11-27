@@ -140,13 +140,62 @@ begin
     end loop;
   end loop;
 
-  -- Reportes de conducta: alumnos con idx % 17 = 0 tienen 2 en noviembre
-  for idx in select x from generate_series(1, 90) x where x % 17 = 0 loop
+  -- Convivencia: incidencias con fecha, hora, lugar y tipo (como un registro real de un trimestre).
+  -- Alumnos con idx % 17 = 0 acumulan varias; el resto, casos aislados. Más en patio a la hora del recreo.
+  for k in 1..45 loop
+    idx := case when k % 3 = 0 then 17 * (1 + k % 5) else 1 + (k * 37) % 90 end;
     v_student := ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid;
     v_teacher := case when idx <= 30 then v_laura else v_jorge end;
-    insert into public.behavior_reports (school_id, student_id, occurred_on, severity, description, created_by) values
-      (v_school, v_student, '2026-11-10', 'minor', 'Interrumpió la clase varias veces.', v_teacher),
-      (v_school, v_student, '2026-11-19', 'moderate', 'Discusión con un compañero en el recreo.', v_teacher);
+    v_day := '2026-09-07'::date + (k * 17) % 78;
+    if extract(isodow from v_day) > 5 then v_day := v_day - (extract(isodow from v_day)::int - 5); end if;
+    insert into public.incidents (school_id, occurred_on, occurred_time, location, category, severity, description, action_taken, reported_by)
+    values (v_school, v_day,
+            (array['08:20','09:40','10:35','10:45','10:50','11:30','12:15','13:20'])[1 + (k * 5) % 8]::time,
+            (array['patio','salon','patio','pasillos','salon','banos','entrada_salida','patio','deportes'])[1 + (k * 7) % 9]::public.incident_location,
+            (array['interrupcion','falta_respeto','agresion_verbal','interrupcion','incumplimiento','agresion_fisica','celular','interrupcion','dano_material'])[1 + (k * 4) % 9]::public.incident_category,
+            (case when k % 11 = 0 then 'serious' when k % 4 = 0 then 'moderate' else 'minor' end)::public.behavior_severity,
+            'Registro de prueba ' || k || '.',
+            (array['platica','llamada_atencion','aviso_familia','reparacion','citatorio'])[1 + k % 5]::public.incident_action,
+            v_teacher)
+    returning id into a;
+    insert into public.behavior_reports (school_id, student_id, occurred_on, severity, description, created_by, incident_id, involvement)
+    select v_school, v_student, i.occurred_on, i.severity, private.category_label(i.category) || '.', v_teacher, i.id, 'involucrado'
+    from public.incidents i where i.id = a;
+  end loop;
+  -- Un posible caso de acoso con alumno afectado, ya en seguimiento de dirección.
+  insert into public.incidents (school_id, occurred_on, occurred_time, location, category, severity, description, action_taken, reported_by)
+  values (v_school, '2026-11-19', '10:40', 'patio', 'acoso', 'moderate', 'Burlas repetidas en el recreo durante dos semanas.', 'citatorio', v_jorge)
+  returning id into a;
+  insert into public.behavior_reports (school_id, student_id, occurred_on, severity, description, created_by, incident_id, involvement) values
+    (v_school, '55555555-5555-5555-5555-000000000034', '2026-11-19', 'moderate', 'Posible acoso escolar.', v_jorge, a, 'involucrado'),
+    (v_school, '55555555-5555-5555-5555-000000000040', '2026-11-19', 'moderate', 'Su hijo o hija se vio afectado en una situación en la escuela. Ya se está atendiendo.', v_jorge, a, 'afectado');
+  insert into public.cases (school_id, student_id, owner_id, summary, opened_by, incident_id, status)
+  values (v_school, '55555555-5555-5555-5555-000000000040', v_director, 'Protocolo de acoso escolar: burlas repetidas en el recreo.', v_jorge, a, 'escalated');
+
+  -- Reconocimientos (más que reportes: la meta es 4 a 1).
+  for k in 1..160 loop
+    idx := 1 + (k * 13) % 90;
+    insert into public.recognitions (school_id, student_id, category, note, created_by, created_at)
+    values (v_school, ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid,
+            (array['esfuerzo','respeto','colaboracion','responsabilidad','mejora','liderazgo'])[1 + k % 6]::public.recognition_category,
+            case when k % 4 = 0 then 'Ayudó a un compañero a terminar su trabajo.' end,
+            case when idx <= 30 then v_laura else v_jorge end,
+            '2026-09-07'::timestamptz + ((k * 11) % 78) * interval '1 day' + interval '15 hours');
+  end loop;
+
+  -- Corte semanal de pendientes en noviembre (Lenguajes y Saberes), todo el grupo.
+  for g in 1..3 loop
+    for k in 0..3 loop
+      for s in 1..2 loop
+        for i in 1..30 loop
+          idx := (g - 1) * 30 + i;
+          insert into public.weekly_pending (school_id, student_id, subject_id, week_start, pending_count, recorded_by)
+          values (v_school, ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid, v_subjects[s], '2026-11-02'::date + k * 7,
+                  case when idx % 11 = 0 then 2 when (idx + k) % 7 = 0 then 1 else 0 end,
+                  case when g = 1 then v_laura else v_jorge end);
+        end loop;
+      end loop;
+    end loop;
   end loop;
 
   insert into public.observations (school_id, student_id, body, created_by) values

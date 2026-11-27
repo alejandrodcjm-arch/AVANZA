@@ -137,9 +137,10 @@ delete from notifications where user_id = tests.uid('papa_l');
 select is(private.build_weekly_digests('2026-11-20', '00000000-0000-0000-0000-0000000000c1'), 2,
   'resumen semanal: uno por hijo del papá con aviso; ninguno para la mamá sin aviso');
 select is((select body from notifications where kind = 'weekly_digest' and student_id = '00000000-0000-0000-0000-0000000000b1'),
-  'Faltó 2 días esta semana. Lleva 4 faltas en el trimestre.', 'el resumen de Ana dice números exactos');
+  'Faltó 2 días esta semana. Lleva 4 faltas en el trimestre. 1 reporte de conducta esta semana; los detalles están en la app.',
+  'el resumen de Ana dice números exactos e incluye su reporte de la semana');
 select is((select body from notifications where kind = 'weekly_digest' and student_id = '00000000-0000-0000-0000-0000000000b2'),
-  'Asistió todos los días de esta semana. No ha faltado en el trimestre.', 'el resumen de Beto reconoce su asistencia');
+  'Asistió todos los días de esta semana. Llegó tarde 1 vez. No ha faltado en el trimestre.', 'el resumen de Beto reconoce su asistencia y menciona el retardo');
 select ok((select bool_and(body !~* '(promedio del grupo|compañeros|lugar|ranking|mejor que|peor que)') from notifications where kind = 'weekly_digest'),
   'el resumen semanal nunca compara con otros alumnos');
 select is(private.build_weekly_digests('2026-11-20', '00000000-0000-0000-0000-0000000000c1'), 0,
