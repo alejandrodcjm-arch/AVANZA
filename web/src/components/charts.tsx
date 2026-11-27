@@ -83,6 +83,14 @@ export function Columns({ items, unit = "", height = 200, label, target, max }: 
 
   return (
     <figure ref={box} aria-label={label} className="relative">
+      {target && (
+        <p className="mb-1 flex items-center justify-end gap-2 text-xs text-muted">
+          <svg width="20" height="4" aria-hidden>
+            <line x1="0" x2="20" y1="2" y2="2" stroke={INK} strokeOpacity={0.55} strokeDasharray="4 4" />
+          </svg>
+          {target.label}
+        </p>
+      )}
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block w-full touch-none" role="img" aria-labelledby={`${id}-t`} onPointerLeave={() => setHover(null)}>
         <title id={`${id}-t`}>{`${label}: ${items.map((i) => `${i.label} ${fmt(i.value)}`).join(", ")}`}</title>
         {ticks.map((t) => (
@@ -114,14 +122,7 @@ export function Columns({ items, unit = "", height = 200, label, target, max }: 
             </g>
           );
         })}
-        {target && (
-          <g>
-            <line x1={pad.l} x2={W - pad.r} y1={Y(target.y)} y2={Y(target.y)} stroke={INK} strokeWidth={1} strokeDasharray="4 4" strokeOpacity={0.55} />
-            <text x={W - pad.r} y={Y(target.y) - 5} textAnchor="end" fontSize={11} fill={INK2}>
-              {target.label}
-            </text>
-          </g>
-        )}
+        {target && <line x1={pad.l} x2={W - pad.r} y1={Y(target.y)} y2={Y(target.y)} stroke={INK} strokeWidth={1} strokeDasharray="4 4" strokeOpacity={0.55} />}
         {h && hover !== null && <line x1={X(hover)} x2={X(hover)} y1={pad.t} y2={H - pad.b} stroke={INK2} strokeOpacity={0.25} />}
       </svg>
       {h && (

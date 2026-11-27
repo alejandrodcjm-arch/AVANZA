@@ -27,7 +27,7 @@ export default async function SchedulePage() {
     const { data } = groups.length ? await supabase.from("schedule_blocks").select(cols).in("group_id", groups.map((g) => g.id)) : { data: [] };
     const blocks: WeekBlock[] = ((data ?? []) as Row[])
       .filter((b) => b.subject_id && mine.has(`${b.group_id}:${b.subject_id}`))
-      .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: label.get(b.group_id) ?? "", sub: [b.subjects?.name, b.room].filter(Boolean).join(" · "), isSubject: true, colorKey: b.group_id }));
+      .map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: b.subjects?.name ?? "", sub: [label.get(b.group_id), b.room].filter(Boolean).join(" · "), isSubject: true, colorKey: b.subject_id }));
     return (
       <>
         <PageHeader title="Mi horario" subtitle="Sus clases de la semana en todos sus grupos." back="/maestro" action={blocks.length ? <PrintButton label="Imprimir" /> : undefined} />

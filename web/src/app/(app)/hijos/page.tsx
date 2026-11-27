@@ -32,15 +32,15 @@ export default async function ChildrenPage() {
   return (
     <>
       <div className="mb-6">
-        <p className="text-sm text-muted capitalize">{formatDate(today)}</p>
+        <p className="text-sm text-muted first-letter:uppercase">{formatDate(today)}</p>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Hola, {firstName(session.fullName) || "bienvenido"}</h1>
         <p className="text-muted">Toque a su hijo o hija para ver todo el detalle.</p>
       </div>
       {ids.length === 0 ? (
         <Empty title="Todavía no hay alumnos ligados a su cuenta">Si ya aceptó la invitación de la escuela, pida en dirección que revisen su registro.</Empty>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ul className="grid gap-4 lg:col-span-2 xl:grid-cols-2">
+        <div className="grid items-start gap-4 lg:grid-cols-3">
+          <ul className="grid items-start gap-4 lg:col-span-2 xl:grid-cols-2">
             {kids.map((o) => {
               const a = o.attendance;
               const attPct = a && a.days > 0 ? Math.round((100 * (a.days - a.absences)) / a.days) : null;
@@ -60,7 +60,7 @@ export default async function ChildrenPage() {
                       <div className="mt-3">
                         <WeekStrip days={o.week.days} today={today} />
                       </div>
-                      <dl className="mt-3 grid grid-cols-4 gap-1 rounded-xl bg-[#f6f3ee] p-3 text-center">
+                      <dl className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-[#f6f3ee] p-3 text-center sm:grid-cols-4 xl:grid-cols-2">
                         <div>
                           <dt className="text-xs text-muted">Asistencia</dt>
                           <dd className="num text-lg font-bold">{attPct === null ? "—" : `${attPct}%`}</dd>
@@ -74,7 +74,7 @@ export default async function ChildrenPage() {
                           <dd className={cx("num text-lg font-bold", pend > 0 && "text-care")}>{pend}</dd>
                         </div>
                         <div>
-                          <dt className="text-xs text-muted">Reconoc.</dt>
+                          <dt className="text-xs text-muted">Reconocimientos</dt>
                           <dd className="num text-lg font-bold">{recs}</dd>
                         </div>
                       </dl>

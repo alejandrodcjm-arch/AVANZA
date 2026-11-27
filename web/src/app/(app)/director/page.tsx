@@ -124,7 +124,7 @@ export default async function DirectorHome() {
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-muted capitalize">{formatDate(today)}</p>
+          <p className="text-sm text-muted first-letter:uppercase">{formatDate(today)}</p>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {greet}, {firstName(session.fullName.replace(/\s*\(.*\)$/, "")) || "dirección"}
           </h1>
@@ -245,10 +245,10 @@ export default async function DirectorHome() {
           <BarList unit="%" max={100} items={att.groups.filter((g) => g.rate !== null).map((g) => ({ label: `${g.group}${g.chronic ? ` · ${g.chronic} crónicos` : ""}`, value: Number(g.rate), attention: Number(g.rate) < 90 }))} />
         </Card>
         <Card className="lg:col-span-5">
-          <CardTitle href="/director/reportes/calificaciones" linkText="Ver concentrado" sub={gradesPeriod ? `${gradesPeriod.name}. Abajo de cada promedio: alumnos con menos de 6.` : undefined}>
+          <CardTitle href="/director/reportes/calificaciones" linkText="Ver concentrado" sub={gradesPeriod?.name}>
             Promedio por grupo y materia
           </CardTitle>
-          <HeatTable cells={(grades?.by_group_subject ?? []).map((c) => ({ row: c.group, col: c.subject, value: c.average === null ? null : Number(c.average), note: c.failing ? `${c.failing} < 6` : undefined }))} />
+          <HeatTable cells={(grades?.by_group_subject ?? []).map((c) => ({ row: c.group, col: c.subject, value: c.average === null ? null : Number(c.average), note: c.failing ? String(c.failing) : undefined }))} />
         </Card>
         <Card className="lg:col-span-3">
           <CardTitle href="/director/reportes/convivencia" sub="Esta semana, por tipo">
@@ -314,7 +314,7 @@ export default async function DirectorHome() {
 
         {/* Apoyo */}
         <Card className="lg:col-span-5">
-          <CardTitle href="/director/casos" linkText="Casos" sub={`${dash.students_needing_support} alumnos con señales · ${dash.open_cases} casos abiertos${dash.overdue_actions ? ` · ${dash.overdue_actions} acciones vencidas` : ""}`}>
+          <CardTitle href="/director/casos" linkText="Casos" sub={`${plural(dash.students_needing_support, "alumno con señales", "alumnos con señales")} · ${plural(dash.open_cases, "caso abierto", "casos abiertos")}${dash.overdue_actions ? ` · ${dash.overdue_actions} acciones vencidas` : ""}`}>
             Alumnos que podrían necesitar apoyo
           </CardTitle>
           {support.length ? (

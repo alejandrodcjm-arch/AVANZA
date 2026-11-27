@@ -21,7 +21,8 @@ export function WeekTable({ blocks, todayWeekday, caption, compact }: { blocks: 
 
   return (
     <div className="-mx-4 overflow-x-auto px-4 print:mx-0 print:overflow-visible print:px-0">
-      <table className={cx("w-full min-w-[640px] border-separate border-spacing-1 text-left", compact ? "text-xs" : "text-sm")}>
+      <p className="mb-1 text-xs text-muted sm:hidden print:hidden">Deslice para ver toda la semana →</p>
+      <table className={cx("w-full min-w-[600px] border-separate border-spacing-1 text-left", compact ? "text-xs" : "text-xs sm:text-sm")}>
         {caption && <caption className="mb-2 text-left text-base font-semibold">{caption}</caption>}
         <thead>
           <tr>
@@ -49,7 +50,7 @@ export function WeekTable({ blocks, todayWeekday, caption, compact }: { blocks: 
                   {hm(slot.e)}
                 </th>
                 {sameBand ? (
-                  <td colSpan={days.length} className="rounded-lg bg-[#f4f1ec] px-2 py-1.5 text-center text-muted">
+                  <td colSpan={days.length} className="rounded-lg bg-[#f4f1ec] px-3 py-1.5 text-left text-muted sm:text-center">
                     {first.title}
                   </td>
                 ) : (

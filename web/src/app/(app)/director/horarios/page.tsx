@@ -58,7 +58,7 @@ export default async function SchedulesPage({ searchParams }: { searchParams: Pr
         title="Horarios"
         subtitle="Familias y maestros ven la semana completa de su grupo; los maestros además la reciben en su calendario."
         back="/director/escuela"
-        action={withSchedule.size > 0 ? <ButtonLink href="/director/horarios?todos=1" variant="secondary">Imprimir todos</ButtonLink> : undefined}
+        action={withSchedule.size > 0 ? <ButtonLink href="/director/horarios?todos=1" variant="secondary" className="whitespace-nowrap">Imprimir todos</ButtonLink> : undefined}
       />
       {!current ? (
         <Empty title="Primero cree los grupos">En Escuela › Grupos y maestros.</Empty>

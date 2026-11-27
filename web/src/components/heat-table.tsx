@@ -21,8 +21,8 @@ export function HeatTable({ cells, rowLabel = "Grupo" }: { cells: HeatCell[]; ro
               {rowLabel}
             </th>
             {cols.map((c) => (
-              <th key={c} scope="col" className="max-w-24 px-1 text-center text-xs leading-tight font-medium text-muted" title={c}>
-                {c.split(" ")[0]}
+              <th key={c} scope="col" className="min-w-16 px-1 pb-1 text-center align-bottom text-[11px] leading-tight font-medium text-muted">
+                {c}
               </th>
             ))}
           </tr>
@@ -40,7 +40,12 @@ export function HeatTable({ cells, rowLabel = "Grupo" }: { cells: HeatCell[]; ro
                 return (
                   <td key={c} title={`${r} · ${c}: ${v ?? "sin captura"}${cell?.note ? ` · ${cell.note}` : ""}`} className={cx("num h-11 min-w-14 rounded-md text-center font-semibold", k >= 4 ? "text-white" : "text-ink", v === null && "text-muted")} style={{ background: k < 0 ? "#f6f3ee" : RAMP[k] }}>
                     {v === null ? "—" : v.toFixed(1)}
-                    {cell?.note && <span className={cx("block text-[10px] leading-none font-normal", k >= 4 ? "text-white/85" : "text-[#7a4f0f]")}>{cell.note}</span>}
+                    {cell?.note && (
+                      <span className={cx("mt-0.5 flex items-center justify-center gap-1 text-[11px] leading-none font-medium", k >= 4 ? "text-white" : "text-[#7a4f0f]")}>
+                        <span className="size-1.5 rounded-full bg-[#c27c1a]" aria-hidden />
+                        {cell.note}
+                      </span>
+                    )}
                   </td>
                 );
               })}
@@ -54,6 +59,9 @@ export function HeatTable({ cells, rowLabel = "Grupo" }: { cells: HeatCell[]; ro
           <span key={c} className="h-2.5 w-5 rounded-sm" style={{ background: c }} />
         ))}
         <span>Mayor promedio</span>
+        <span className="ml-3 flex items-center gap-1">
+          <span className="size-1.5 rounded-full bg-[#c27c1a]" /> alumnos con menos de 6
+        </span>
       </div>
     </div>
   );

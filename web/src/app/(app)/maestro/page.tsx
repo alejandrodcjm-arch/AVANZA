@@ -81,7 +81,7 @@ export default async function TeacherHome() {
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-muted capitalize">{formatDate(today)}</p>
+          <p className="text-sm text-muted first-letter:uppercase">{formatDate(today)}</p>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Hola, {firstName(session.fullName) || "maestra/o"}</h1>
           <p className="text-muted">{groups.map((g) => g.label).join(" · ")}</p>
         </div>
@@ -105,7 +105,7 @@ export default async function TeacherHome() {
           {groups.length === 0 ? (
             <Empty title="Aún no tiene grupos asignados">Dirección le asigna sus grupos y materias en Escuela › Grupos.</Empty>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className={cx("grid gap-4", groups.length > 1 && "xl:grid-cols-2")}>
               {groups.map((g) => {
                 const gAtt = att.filter((a) => a.group_id === g.id);
                 const gRate = rate(gAtt);
@@ -258,7 +258,7 @@ export default async function TeacherHome() {
             <WeekTable
               compact
               todayWeekday={isoWeekday(today)}
-              blocks={myBlocks.map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: label.get(b.group_id) ?? "", sub: b.subjects?.name, isSubject: true, colorKey: b.group_id }))}
+              blocks={myBlocks.map((b) => ({ id: b.id, weekday: b.weekday, starts_at: b.starts_at, ends_at: b.ends_at, title: b.subjects?.name ?? "", sub: label.get(b.group_id), isSubject: true, colorKey: b.subject_id }))}
             />
           </Card>
         )}
