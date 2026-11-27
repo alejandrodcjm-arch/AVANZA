@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { AlertsList } from "@/components/alerts-list";
+import { LineChart } from "@/components/charts";
 import { ButtonLink, Card, PageHeader, Stat } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { formatShortDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import { todayLocal } from "@/lib/time";
+import { addDays, todayLocal } from "@/lib/time";
 
 export const metadata = { title: "Tablero" };
 
@@ -23,14 +24,19 @@ export default async function DirectorHome() {
   const { membership } = await requireRole("director");
   const supabase = await createClient();
   const today = todayLocal();
-  const [{ data: d }, students, linked, years, subjects, teachers] = await Promise.all([
+  const [{ data: d }, students, linked, years, subjects, teachers, { data: att }, { data: beh }] = await Promise.all([
     supabase.rpc("director_dashboard", { p_school: membership.schoolId, p_today: today }),
     supabase.from("students").select("id", { count: "exact", head: true }).eq("school_id", membership.schoolId),
     supabase.from("student_guardians").select("student_id").eq("school_id", membership.schoolId),
     supabase.from("school_years").select("id", { count: "exact", head: true }).eq("school_id", membership.schoolId).eq("is_current", true),
     supabase.from("subjects").select("id", { count: "exact", head: true }).eq("school_id", membership.schoolId),
     supabase.from("memberships").select("id", { count: "exact", head: true }).eq("school_id", membership.schoolId).eq("role", "teacher"),
+    supabase.rpc("report_attendance", { p_school: membership.schoolId, p_from: addDays(today, -29), p_to: today }),
+    supabase.rpc("report_behavior", { p_school: membership.schoolId, p_from: addDays(today, -6), p_to: today }),
   ]);
+  const attendance = att as unknown as { daily: { date: string; rate: number; absences: number }[]; today: { status: string }[] };
+  const week = beh as unknown as { total: number; recognitions: number; bullying_open: number };
+  const lastDay = attendance.daily.at(-1);
   const dash = d as unknown as Dashboard;
   const totalStudents = students.count ?? 0;
   const withFamily = new Set((linked.data ?? []).map((l) => l.student_id)).size;
@@ -64,7 +70,15 @@ export default async function DirectorHome() {
           </Card>
         )}
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <Card>
+            <Stat value={lastDay ? `${lastDay.rate}%` : "—"} label={lastDay?.date === today ? "asistencia hoy" : "asistencia del último día con lista"} />
+            <p className="mt-1 text-sm text-muted">{attendance.today.filter((t) => t.status === "absent").length} faltas hoy</p>
+          </Card>
+          <Card>
+            <Stat value={week.total} label="incidencias esta semana" />
+            <p className="mt-1 text-sm text-muted">{week.recognitions} reconocimientos{week.bullying_open ? ` · ${week.bullying_open} acoso en seguimiento` : ""}</p>
+          </Card>
           <Card>
             <Stat value={dash.students_needing_support} label="alumnos con señales" tone={dash.students_needing_support ? "care" : "good"} />
           </Card>
@@ -80,6 +94,16 @@ export default async function DirectorHome() {
             <Stat value={dash.summaries_pending} label="resúmenes sin aprobar" />
           </Card>
         </div>
+
+        <Card>
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="font-semibold">Asistencia, últimos 30 días</h2>
+            <Link href="/director/reportes/asistencia" className="text-sm font-medium text-brand underline">
+              Ver reporte
+            </Link>
+          </div>
+          <LineChart label="Porcentaje de asistencia por día" unit="%" max={100} target={{ y: 90, label: "90%" }} points={attendance.daily.map((x) => ({ x: x.date, label: formatShortDate(x.date), y: Number(x.rate) }))} />
+        </Card>
 
         {dash.teachers_behind.length > 0 && (
           <Card>

@@ -66,3 +66,46 @@ test("el director ve el tablero, las familias pendientes y la bitácora", async 
   await page.goto("/director/escuela/bitacora");
   await expect(page.getByRole("heading", { name: "Bitácora" })).toBeVisible();
 });
+
+// Versión 2 ---------------------------------------------------------------------------
+
+test("el papá ve su semana, reconocimientos y conducta", async ({ page }) => {
+  await login(page, "papa@demo.mx");
+  await page.getByRole("heading", { name: "Natalia" }).click();
+  await expect(page.getByRole("heading", { name: "Esta semana" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Asistencia de esta semana" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Conducta/ })).toBeVisible();
+});
+
+test("la maestra hace el corte semanal y da un reconocimiento", async ({ page }) => {
+  await login(page, "laura@demo.mx");
+  await page.goto("/maestro/grupos/33333333-3333-3333-3333-333333333331/pendientes");
+  await expect(page.getByText(/al corriente ·/)).toBeVisible();
+  await page.getByRole("button", { name: "Uno más" }).first().click();
+  await page.getByRole("button", { name: /corte/ }).last().click();
+  await expect(page.getByText(/Corte guardado/)).toBeVisible();
+
+  await page.goto("/maestro/grupos/33333333-3333-3333-3333-333333333331/conducta");
+  // Primer alumno del selector
+  await page.locator("button[aria-pressed]").first().click();
+  await page.getByRole("button", { name: /Esfuerzo/ }).click();
+  await page.getByRole("button", { name: "Reconocer", exact: true }).click();
+  await expect(page.getByText(/Reconocimiento guardado/)).toBeVisible();
+});
+
+test("el director ve los reportes y descarga el concentrado", async ({ page }) => {
+  await login(page, "director@demo.mx");
+  for (const [path, heading] of [
+    ["/director/reportes/asistencia", "Asistencia diaria"],
+    ["/director/reportes/calificaciones", "Avance de captura por maestro"],
+    ["/director/reportes/convivencia", "¿Dónde?"],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  }
+  await page.goto("/director/reportes/maestros");
+  await expect(page.getByText("Laura Castillo")).toBeVisible();
+  const res = await page.request.get("/api/reportes/concentrado?periodo=11111111-1111-1111-1111-111111111113");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("spreadsheetml");
+});

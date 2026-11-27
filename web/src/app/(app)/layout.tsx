@@ -19,11 +19,11 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/cuenta", label: "Cuenta", icon: "user" },
   ],
   director: [
-    { href: "/director", label: "Tablero", icon: "chart" },
+    { href: "/director", label: "Tablero", icon: "home" },
+    { href: "/director/reportes", label: "Reportes", icon: "chart" },
     { href: "/director/casos", label: "Casos", icon: "folder" },
     { href: "/director/familias", label: "Familias", icon: "people" },
     { href: "/director/escuela", label: "Escuela", icon: "gear" },
-    { href: "/cuenta", label: "Cuenta", icon: "user" },
   ],
 };
 
@@ -48,11 +48,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Image src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-lg" />
           <span className="truncate">{session.active.schoolName}</span>
         </Link>
-        {session.memberships.length > 1 && (
-          <Link href="/cuenta#rol" className="min-h-10 content-center underline">
-            Cambiar
-          </Link>
-        )}
+        <span className="flex items-center gap-3">
+          {session.memberships.length > 1 && (
+            <Link href="/cuenta#rol" className="min-h-10 content-center underline">
+              Cambiar
+            </Link>
+          )}
+          {session.active.role === "director" && (
+            <Link href="/cuenta" className="min-h-10 content-center underline">
+              Cuenta
+            </Link>
+          )}
+        </span>
       </div>
       <main>{children}</main>
       <BottomNav items={items} />

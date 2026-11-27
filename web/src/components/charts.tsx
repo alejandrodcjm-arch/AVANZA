@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 // Una serie = un color (validado: contraste ≥3:1, croma ≥0.10). El ámbar marca "requiere atención"
 // y siempre va con etiqueta; el texto nunca usa el color de la serie.
@@ -93,10 +93,19 @@ export function Columns({ items, unit = "", height = 160, label }: { items: Item
 export function LineChart({ points, unit = "", min, max, label, target }: { points: { x: string; label: string; y: number }[]; unit?: string; min?: number; max?: number; label: string; target?: { y: number; label: string } }) {
   const id = useId();
   const ref = useRef<SVGSVGElement>(null);
+  const box = useRef<HTMLElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  // El SVG mide lo mismo que su contenedor: los textos conservan su tamaño real en celular y en escritorio.
+  const [W, setW] = useState(640);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(260, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   if (points.length < 2) return <p className="text-muted">Se necesitan al menos dos días con datos.</p>;
-  const W = 640;
-  const H = 200;
+  const H = W < 480 ? 180 : 210;
   const pad = { l: 34, r: 44, t: 12, b: 22 };
   const ys = points.map((p) => p.y);
   const lo = min ?? Math.floor(Math.min(...ys) - 2);
@@ -116,8 +125,8 @@ export function LineChart({ points, unit = "", min, max, label, target }: { poin
   };
 
   return (
-    <figure aria-label={label} className="relative">
-      <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="w-full touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-labelledby={`${id}-t`}>
+    <figure ref={box} aria-label={label} className="relative">
+      <svg ref={ref} viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block w-full touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-labelledby={`${id}-t`}>
         <title id={`${id}-t`}>{`${label}. Último: ${last.y}${unit} (${last.label}).`}</title>
         {ticks.map((t) => (
           <g key={t}>
