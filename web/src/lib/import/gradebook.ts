@@ -41,7 +41,7 @@ export const norm = (s: unknown) =>
 const tokens = (s: string) => norm(s).split(" ").filter((t) => t.length > 1 || t === "y");
 
 /** Puntaje de coincidencia entre un texto y un alumno: apellido paterno + primer nombre son obligatorios. */
-function matchScore(text: string, s: RosterStudent): number {
+export function matchScore(text: string, s: RosterStudent): number {
   const t = new Set(tokens(text));
   const last = tokens(s.last_name);
   const first = tokens(s.first_name);

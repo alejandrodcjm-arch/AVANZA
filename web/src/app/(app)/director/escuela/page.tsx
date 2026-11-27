@@ -7,6 +7,9 @@ export const metadata = { title: "Escuela" };
 const LINKS = [
   { href: "/director/escuela/datos", title: "Datos de la escuela", text: "Nombre, domicilio y contacto del aviso de privacidad." },
   { href: "/director/escuela/ciclo", title: "Ciclo, periodos y materias", text: "Trimestres del ciclo 2026-2027 y campos formativos." },
+  { href: "/calendario", title: "Calendario escolar", text: "Fechas SEP, suspensiones, juntas y eventos. Familias y maestros lo tienen en su celular." },
+  { href: "/director/horarios", title: "Horarios", text: "Horario de cada grupo, desde su Excel o a mano." },
+  { href: "/director/colegiaturas", title: "Colegiaturas", text: "Estado de cuenta privado para cada familia y recordatorios de pago." },
   { href: "/director/importar", title: "Importar alumnos y familias", text: "Desde la plantilla de Excel. Se puede repetir sin duplicar." },
   { href: "/director/personal", title: "Personal", text: "Maestros y dirección con acceso." },
   { href: "/director/escuela/grupos", title: "Grupos y maestros", text: "Quién da cada materia y quién es titular." },

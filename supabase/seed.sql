@@ -213,4 +213,36 @@ begin
   where id in ('55555555-5555-5555-5555-000000000001', '55555555-5555-5555-5555-000000000031');
   update public.students set last_name = 'Ortiz', second_last_name = 'Luna'
   where id = '55555555-5555-5555-5555-000000000002';
+  -- v3: calendario SEP + eventos de la escuela, horarios y estado de cuenta ------------------
+  perform private.insert_sep_calendar(v_school, v_director);
+  insert into public.calendar_events (school_id, group_id, subject_id, kind, title, description, starts_on, ends_on, start_time, end_time, created_by) values
+    (v_school, null, null, 'junta', 'Junta de padres de familia', 'Entrega de boletas del primer trimestre en el salón de cada grupo.', '2026-12-04', '2026-12-04', '08:00', '09:30', v_director),
+    (v_school, null, null, 'evento', 'Festival navideño', 'En el patio principal. Los alumnos llegan 7:30 con su vestuario.', '2026-12-18', '2026-12-18', '09:00', '11:30', v_director),
+    (v_school, v_groups[1], v_subjects[2], 'examen', 'Examen de fracciones', 'Repasar las páginas 40 a 52 del libro.', '2026-12-08', '2026-12-08', null, null, v_laura),
+    (v_school, v_groups[2], v_subjects[1], 'evento', 'Visita a la biblioteca municipal', 'Traer permiso firmado.', '2026-12-10', '2026-12-10', '09:00', '12:00', v_jorge);
+
+  for g in 1..3 loop
+    for k in 1..5 loop
+      insert into public.schedule_blocks (school_id, group_id, weekday, starts_at, ends_at, subject_id, label) values
+        (v_school, v_groups[g], k, '08:00', '09:00', v_subjects[1 + (k + g) % 4], null),
+        (v_school, v_groups[g], k, '09:00', '10:00', v_subjects[1 + (k + g + 1) % 4], null),
+        (v_school, v_groups[g], k, '10:00', '10:30', null, 'Recreo'),
+        (v_school, v_groups[g], k, '10:30', '11:30', v_subjects[1 + (k + g + 2) % 4], null),
+        (v_school, v_groups[g], k, '11:30', '12:30', v_subjects[1 + (k + g + 3) % 4], null),
+        (v_school, v_groups[g], k, '12:30', '13:30', null, case when k = 1 then 'Honores y Educación Física' when k in (2, 4) then 'Inglés' else 'Artes' end);
+    end loop;
+  end loop;
+
+  update public.schools set payment_info = 'Banco Demo · CLABE 000000000000000000 · Referencia: número de lista del alumno. También en caja de 7:30 a 14:00.'
+  where id = v_school;
+  for idx in 1..90 loop
+    v_student := ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid;
+    insert into public.tuition_charges (school_id, student_id, concept, amount, paid, due_on, paid_on) values
+      (v_school, v_student, 'Inscripción 2026-2027', 4200, 4200, '2026-08-15', '2026-08-12'),
+      (v_school, v_student, 'Colegiatura septiembre', 3500, 3500, '2026-09-10', '2026-09-08'),
+      (v_school, v_student, 'Colegiatura octubre', 3500, case when idx % 17 = 0 then 0 else 3500 end, '2026-10-10', case when idx % 17 = 0 then null else '2026-10-09'::date end),
+      (v_school, v_student, 'Colegiatura noviembre', 3500, case when idx % 9 = 0 or idx % 17 = 0 or idx = 31 then 0 else 3500 end, '2026-11-10',
+       case when idx % 9 = 0 or idx % 17 = 0 or idx = 31 then null else '2026-11-10'::date end),
+      (v_school, v_student, 'Colegiatura diciembre', 3500, 0, '2026-12-10', null);
+  end loop;
 end $$;

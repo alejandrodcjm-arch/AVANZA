@@ -462,6 +462,121 @@ export type Database = {
           },
         ];
       };
+      calendar_events: {
+        Row: {
+          id: string;
+          school_id: string;
+          group_id: string | null;
+          subject_id: string | null;
+          kind: Database["public"]["Enums"]["event_kind"];
+          title: string;
+          description: string | null;
+          starts_on: string;
+          ends_on: string;
+          start_time: string | null;
+          end_time: string | null;
+          staff_only: boolean;
+          announced_at: string | null;
+          source: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          group_id?: string | null;
+          subject_id?: string | null;
+          kind: Database["public"]["Enums"]["event_kind"];
+          title: string;
+          description?: string | null;
+          starts_on: string;
+          ends_on: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          staff_only?: boolean;
+          announced_at?: string | null;
+          source?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          group_id?: string | null;
+          subject_id?: string | null;
+          kind?: Database["public"]["Enums"]["event_kind"];
+          title?: string;
+          description?: string | null;
+          starts_on?: string;
+          ends_on?: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          staff_only?: boolean;
+          announced_at?: string | null;
+          source?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calendar_events_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calendar_events_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calendar_events_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      calendar_feeds: {
+        Row: {
+          user_id: string;
+          token: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          token?: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          token?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       case_actions: {
         Row: {
           id: string;
@@ -1501,6 +1616,64 @@ export type Database = {
           },
         ];
       };
+      schedule_blocks: {
+        Row: {
+          id: string;
+          school_id: string;
+          group_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          subject_id: string | null;
+          label: string | null;
+          room: string | null;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          group_id: string;
+          weekday: number;
+          starts_at: string;
+          ends_at: string;
+          subject_id?: string | null;
+          label?: string | null;
+          room?: string | null;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          group_id?: string;
+          weekday?: number;
+          starts_at?: string;
+          ends_at?: string;
+          subject_id?: string | null;
+          label?: string | null;
+          room?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "schedule_blocks_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "schedule_blocks_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "schedule_blocks_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       school_years: {
         Row: {
           id: string;
@@ -1552,6 +1725,7 @@ export type Database = {
           address: string | null;
           privacy_email: string | null;
           phone: string | null;
+          payment_info: string | null;
         };
         Insert: {
           id?: string;
@@ -1565,6 +1739,7 @@ export type Database = {
           address?: string | null;
           privacy_email?: string | null;
           phone?: string | null;
+          payment_info?: string | null;
         };
         Update: {
           id?: string;
@@ -1578,6 +1753,7 @@ export type Database = {
           address?: string | null;
           privacy_email?: string | null;
           phone?: string | null;
+          payment_info?: string | null;
         };
         Relationships: [];
       };
@@ -1854,6 +2030,66 @@ export type Database = {
           },
         ];
       };
+      tuition_charges: {
+        Row: {
+          id: string;
+          school_id: string;
+          student_id: string;
+          concept: string;
+          amount: number;
+          paid: number;
+          due_on: string;
+          paid_on: string | null;
+          reminded_at: string | null;
+          overdue_notified_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          student_id: string;
+          concept: string;
+          amount: number;
+          paid?: number;
+          due_on: string;
+          paid_on?: string | null;
+          reminded_at?: string | null;
+          overdue_notified_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          student_id?: string;
+          concept?: string;
+          amount?: number;
+          paid?: number;
+          due_on?: string;
+          paid_on?: string | null;
+          reminded_at?: string | null;
+          overdue_notified_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tuition_charges_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tuition_charges_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       weekly_pending: {
         Row: {
           id: string;
@@ -1965,8 +2201,10 @@ export type Database = {
     };
     Functions: {
       accept_guardian_invitation: { Args: { p_token: string }; Returns: string };
+      announce_event: { Args: { p_event: string }; Returns: number };
       approve_summary: { Args: { p_summary: string; p_text: string }; Returns: undefined };
       build_summary_snapshot: { Args: { p_student: string; p_month: string }; Returns: Json };
+      calendar_feed: { Args: { p_token: string }; Returns: Json };
       close_case: { Args: { p_case: string; p_outcome: string }; Returns: undefined };
       convert_alert_to_case: { Args: { p_alert: string; p_summary: string; p_owner?: string }; Returns: string };
       director_dashboard: { Args: { p_school: string; p_today?: string }; Returns: Json };
@@ -1976,21 +2214,26 @@ export type Database = {
       give_recognition: { Args: { p_students: string[]; p_category: Database["public"]["Enums"]["recognition_category"]; p_note?: string }; Returns: number };
       import_gradebook: { Args: { p_group: string; p_subject: string; p_file_name: string; p_activities: Json }; Returns: Json };
       import_roster: { Args: { p_school: string; p_rows: Json; p_file_name?: string }; Returns: Json };
+      import_tuition: { Args: { p_school: string; p_rows: Json }; Returns: Json };
       invitation_preview: { Args: { p_token: string }; Returns: Json };
+      load_sep_calendar: { Args: { p_school: string }; Returns: number };
       log_student_view: { Args: { p_student: string }; Returns: undefined };
       mark_invitations_sent: { Args: { p_ids: string[] }; Returns: undefined };
       renew_invitation: { Args: { p_invitation: string }; Returns: Json };
+      replace_schedule: { Args: { p_group: string; p_blocks: Json }; Returns: number };
       report_attendance: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
       report_behavior: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
       report_grades: { Args: { p_school: string; p_period: string }; Returns: Json };
       report_incident: { Args: { p_involved: string[]; p_affected: string[]; p_occurred_on: string; p_time: string; p_location: Database["public"]["Enums"]["incident_location"]; p_category: Database["public"]["Enums"]["incident_category"]; p_severity: Database["public"]["Enums"]["behavior_severity"]; p_description: string; p_action: Database["public"]["Enums"]["incident_action"]; p_family_note: string }; Returns: string };
       report_staff: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
+      rotate_calendar_feed: { Args: never; Returns: string };
       save_attendance: { Args: { p_group: string; p_date: string; p_exceptions: Json }; Returns: number };
       save_grades: { Args: { p_subject: string; p_period: string; p_scores: Json }; Returns: number };
       save_summary_draft: { Args: { p_summary: string; p_text: string; p_errors: Json; p_prompt_version: string; p_model: string }; Returns: undefined };
       save_weekly_pending: { Args: { p_group: string; p_subject: string; p_week: string; p_counts: Json }; Returns: number };
       set_assignment_misses: { Args: { p_assignment: string; p_students: string[] }; Returns: number };
       student_overview: { Args: { p_student: string; p_today?: string }; Returns: Json };
+      tuition_report: { Args: { p_school: string; p_today?: string }; Returns: Json };
     };
     Enums: {
       action_status: "pending" | "done" | "cancelled";
@@ -2001,6 +2244,7 @@ export type Database = {
       attendance_status: "present" | "absent" | "late" | "excused";
       behavior_severity: "minor" | "moderate" | "serious";
       case_status: "open" | "escalated" | "closed";
+      event_kind: "sin_clases" | "vacaciones" | "cte" | "examen" | "boletas" | "junta" | "evento" | "pago" | "otro";
       import_status: "preview" | "committed" | "failed";
       incident_action: "platica" | "llamada_atencion" | "aviso_familia" | "citatorio" | "reparacion" | "suspension" | "canalizacion" | "ninguna";
       incident_category: "interrupcion" | "incumplimiento" | "falta_respeto" | "agresion_verbal" | "agresion_fisica" | "acoso" | "dano_material" | "celular" | "deshonestidad" | "otra";

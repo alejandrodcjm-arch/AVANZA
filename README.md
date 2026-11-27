@@ -10,7 +10,7 @@ Nombre provisional: **Avanza**.
 
 | Carpeta | Contenido |
 | --- | --- |
-| `docs/` | Alcance, permisos, historias de usuario, pantallas, guía psicológica, decisiones, puesta en marcha y operación. |
+| `docs/` | Alcance, permisos, historias de usuario, pantallas, guía psicológica, decisiones, puesta en marcha, operación, investigación v2 (tareas, conducta, dirección) y v3 (calendario, horarios, colegiaturas). |
 | `supabase/migrations/` | Base de datos: 32 tablas, permisos por fila (RLS), lógica (alertas, resúmenes, casos), tareas programadas. |
 | `supabase/tests/database/` | 163 pruebas pgTAP de permisos y lógica. |
 | `supabase/seed.sql` | Escuela de demostración: 90 alumnos, 3 grupos, asistencia y calificaciones del trimestre 1. |

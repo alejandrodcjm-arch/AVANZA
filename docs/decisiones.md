@@ -25,3 +25,7 @@
 | 2026-11-26 | Incidencias con lugar, hora, tipo y acción; texto para familia separado del interno | Reportes "Big 5" para dirección y privacidad de los otros niños. |
 | 2026-11-26 | Alumno afectado no cuenta como reporte de conducta | No etiquetar a la víctima. |
 | 2026-11-26 | Gráficas propias en SVG/HTML, una serie = un color validado | Sin librerías pesadas; colores revisados con validador de contraste y daltonismo. |
+| 2026-11-27 | Calendario por suscripción ICS en vez de API de Google Calendar | Gratis, sin OAuth ni revisión de Google, funciona igual en Google, Apple y Outlook. Lo urgente va por aviso de la app porque Google refresca lento. |
+| 2026-11-27 | Fechas de pago en el calendario sin montos ni estado | El calendario personal se comparte a veces con la pareja o se ve en pantallas. |
+| 2026-11-27 | Colegiaturas solo para familia y dirección; maestros no | Privacidad y Profeco: nunca exhibir adeudos; evita trato distinto al alumno. |
+| 2026-11-27 | Estado de cuenta desde el Excel de administración | Cero captura doble; sirve el reporte de caja o la tabla por meses. |

@@ -109,3 +109,55 @@ test("el director ve los reportes y descarga el concentrado", async ({ page }) =
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("spreadsheetml");
 });
+
+// Versión 3 ---------------------------------------------------------------------------
+
+test("el papá ve horario, calendario con fechas SEP y su estado de cuenta privado", async ({ page }) => {
+  await login(page, "papa@demo.mx");
+  await page.goto("/horario");
+  await expect(page.getByRole("heading", { name: /Natalia/ })).toBeVisible();
+  await expect(page.getByText("Recreo").first()).toBeVisible();
+
+  await page.goto("/calendario?ver=todo");
+  await expect(page.getByText("Vacaciones de invierno")).toBeVisible();
+  await expect(page.getByText("Registro de calificaciones (SEP)")).toHaveCount(0);
+  await page.getByRole("button", { name: "Activar" }).click();
+  const google = page.getByRole("link", { name: "Google Calendar" });
+  await expect(google).toBeVisible();
+  const href = (await google.getAttribute("href"))!;
+  const feed = decodeURIComponent(new URL(href).searchParams.get("cid")!).replace("webcal://", "http://").replace(/^http:\/\/[^/]+/, "");
+  const ics = await page.request.get(feed);
+  expect(ics.status()).toBe(200);
+  const body = await ics.text();
+  expect(body).toContain("BEGIN:VCALENDAR");
+  expect(body).toContain("Fecha de pago: Colegiatura diciembre");
+  expect(body).not.toMatch(/\$\s?\d|3,500|Importe/);
+
+  await page.goto("/pagos");
+  await expect(page.getByRole("heading", { name: "Natalia" })).toBeVisible();
+  await expect(page.getByText("Al corriente")).toBeVisible();
+  await expect(page.getByText("1 pago pendiente")).toBeVisible(); // Luis debe noviembre en el seed
+  await expect(page.getByText("Cómo pagar")).toBeVisible();
+});
+
+test("la maestra agenda un examen; dirección ve horarios y cobranza; los maestros no ven pagos", async ({ page }) => {
+  await login(page, "laura@demo.mx");
+  await page.goto("/calendario");
+  await page.getByText("Agendar examen o evento de su grupo").click();
+  await page.getByLabel("Qué es").fill("Examen de lectura");
+  await page.getByLabel("Fecha").fill("2026-12-15");
+  await page.getByRole("button", { name: "Guardar en el calendario" }).click();
+  await expect(page.getByText("Examen de lectura")).toBeVisible();
+  await page.goto("/horario");
+  await expect(page.getByRole("heading", { name: "Mi horario" })).toBeVisible();
+  await page.goto("/director/colegiaturas");
+  await expect(page).not.toHaveURL(/colegiaturas/);
+
+  await page.context().clearCookies();
+  await login(page, "director@demo.mx");
+  await page.goto("/director/horarios");
+  await expect(page.getByRole("button", { name: /Guardar horario de 3°A/ })).toBeVisible();
+  await page.goto("/director/colegiaturas");
+  await expect(page.getByRole("heading", { name: "Pagos vencidos" })).toBeVisible();
+  await expect(page.getByText("de 90 alumnos con pagos vencidos")).toBeVisible();
+});

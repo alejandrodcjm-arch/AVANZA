@@ -31,3 +31,6 @@ export function studentName(s: { first_name: string; last_name: string; second_l
 export function firstName(fullName: string) {
   return fullName.trim().split(/\s+/)[0] ?? "";
 }
+
+const moneyFmt = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2, minimumFractionDigits: 0 });
+export const formatMoney = (n: number) => moneyFmt.format(n);

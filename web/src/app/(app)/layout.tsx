@@ -8,15 +8,17 @@ import { createClient } from "@/lib/supabase/server";
 const NAV: Record<Role, NavItem[]> = {
   guardian: [
     { href: "/hijos", label: "Mis hijos", icon: "home" },
+    { href: "/calendario", label: "Calendario", icon: "calendar" },
+    { href: "/pagos", label: "Pagos", icon: "wallet" },
     { href: "/avisos", label: "Avisos", icon: "bell" },
     { href: "/cuenta", label: "Cuenta", icon: "user" },
   ],
   teacher: [
     { href: "/maestro", label: "Mi semana", icon: "home" },
+    { href: "/calendario", label: "Calendario", icon: "calendar" },
     { href: "/maestro/alertas", label: "Apoyo", icon: "flag" },
     { href: "/maestro/resumenes", label: "Resúmenes", icon: "doc" },
     { href: "/avisos", label: "Avisos", icon: "bell" },
-    { href: "/cuenta", label: "Cuenta", icon: "user" },
   ],
   director: [
     { href: "/director", label: "Tablero", icon: "home" },
@@ -54,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               Cambiar
             </Link>
           )}
-          {session.active.role === "director" && (
+          {session.active.role !== "guardian" && (
             <Link href="/cuenta" className="min-h-10 content-center underline">
               Cuenta
             </Link>

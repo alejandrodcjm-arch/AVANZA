@@ -8,7 +8,8 @@ import { RECOGNITION } from "@/lib/convivencia";
 import { formatDate, formatMonth, formatScore, formatShortDate, plural } from "@/lib/format";
 import type { Overview } from "@/lib/overview";
 import { createClient } from "@/lib/supabase/server";
-import { monthStart, todayLocal } from "@/lib/time";
+import { WEEKDAYS } from "@/lib/calendar/kinds";
+import { addDays, isWeekday, isoWeekday, localHour, monthStart, todayLocal } from "@/lib/time";
 import { markGoal } from "./actions";
 import { GoalForm } from "./goal-form";
 
@@ -32,6 +33,18 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
   const weekRecs = o.recognitions.filter((r) => r.date >= o.week.start);
   const weekReports = o.behavior.filter((b) => b.date >= o.week.start && b.involvement === "involucrado");
   const history = new Map(o.grade_history.map((h) => [h.subject, h.points]));
+  // Clases de hoy (o del siguiente día de escuela si ya salieron) y fechas cercanas del grupo.
+  let classDay = today;
+  if (!isWeekday(classDay) || localHour() >= 14) do classDay = addDays(classDay, 1); while (!isWeekday(classDay));
+  const dayLabel = classDay === today ? "Hoy le toca" : classDay === addDays(today, 1) ? "Mañana le toca" : `El ${WEEKDAYS[isoWeekday(classDay)].toLowerCase()} le toca`;
+  const [blocksRes, eventsRes] = await Promise.all([
+    o.group
+      ? supabase.from("schedule_blocks").select("label, subjects(name)").eq("group_id", o.group.id).eq("weekday", isoWeekday(classDay)).order("starts_at")
+      : Promise.resolve({ data: [] as { label: string | null; subjects: { name: string } | null }[] }),
+    supabase.from("calendar_events").select("id, title, starts_on, group_id").gte("ends_on", today).lte("starts_on", addDays(today, 14)).order("starts_on").limit(8),
+  ]);
+  const classes = [...new Set((blocksRes.data ?? []).filter((b) => b.subjects).map((b) => b.subjects!.name))];
+  const upcoming = (eventsRes.data ?? []).filter((e) => !e.group_id || e.group_id === o.group?.id).slice(0, 4);
   const icon = (cat: string) => RECOGNITION.find((r) => r.key === cat)?.icon ?? "⭐";
 
   return (
@@ -77,6 +90,42 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
               Para casa: pregúntele qué parte se le complicó y acuerden una hora fija para hacer tarea. No hace falta hacerla por {name}.
             </p>
           )}
+        </Card>
+
+        {/* Lo que sigue: clases del día y fechas cercanas del grupo */}
+        <Card className="space-y-3">
+          <div>
+            <div className="flex items-baseline justify-between">
+              <h2 className="font-semibold">{dayLabel}</h2>
+              <Link href="/horario" className="min-h-10 content-center text-sm text-brand underline">
+                Horario completo
+              </Link>
+            </div>
+            {classes.length ? (
+              <p className="text-muted">{classes.join(" · ")}</p>
+            ) : (
+              <p className="text-muted">La escuela aún no ha cargado el horario.</p>
+            )}
+          </div>
+          <div>
+            <div className="flex items-baseline justify-between">
+              <h2 className="font-semibold">Próximas fechas</h2>
+              <Link href="/calendario" className="min-h-10 content-center text-sm text-brand underline">
+                Calendario
+              </Link>
+            </div>
+            {upcoming.length ? (
+              <ul className="space-y-1">
+                {upcoming.map((e) => (
+                  <li key={e.id}>
+                    <span className="text-muted">{formatShortDate(e.starts_on)}:</span> {e.title}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted">Nada en las próximas dos semanas.</p>
+            )}
+          </div>
         </Card>
 
         {latest && (

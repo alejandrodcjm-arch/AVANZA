@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { firstName, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { teacherGroups, weekStart } from "@/lib/teacher";
-import { addDays, isWeekday, todayLocal } from "@/lib/time";
+import { addDays, isoWeekday, isWeekday, todayLocal } from "@/lib/time";
 
 export const metadata = { title: "Mi semana" };
 
@@ -30,7 +30,7 @@ export default async function TeacherHome() {
   const groups = await teacherGroups(supabase, session.userId);
   const gids = groups.length ? groups.map((g) => g.id) : ["00000000-0000-0000-0000-000000000000"];
 
-  const [attendance, cuts, recs, incs, alerts, summaries, enroll] = await Promise.all([
+  const [attendance, cuts, recs, incs, alerts, summaries, enroll, todayBlocks, upcoming] = await Promise.all([
     supabase.from("attendance").select("group_id, date").in("group_id", gids).gte("date", week).lte("date", today),
     supabase.from("weekly_pending").select("subject_id, student_id").eq("week_start", week).eq("recorded_by", session.userId),
     supabase.from("recognitions").select("id", { count: "exact", head: true }).eq("created_by", session.userId).gte("created_at", week),
@@ -38,7 +38,12 @@ export default async function TeacherHome() {
     supabase.from("alerts").select("id", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("monthly_summaries").select("id", { count: "exact", head: true }).neq("status", "approved"),
     supabase.from("enrollments").select("group_id, student_id").in("group_id", gids),
+    supabase.from("schedule_blocks").select("id, group_id, subject_id, starts_at, ends_at, subjects(name)").in("group_id", gids).eq("weekday", isoWeekday(today)).order("starts_at"),
+    supabase.from("calendar_events").select("id, title, starts_on, kind, groups(grade, name)").gte("ends_on", today).lte("starts_on", addDays(today, 7)).order("starts_on").limit(4),
   ]);
+  const mine = new Set(groups.flatMap((g) => g.subjects.map((s) => `${g.id}:${s.id}`)));
+  const label = new Map(groups.map((g) => [g.id, g.label]));
+  const classesToday = (todayBlocks.data ?? []).filter((b) => b.subject_id && mine.has(`${b.group_id}:${b.subject_id}`));
   const studentGroup = new Map((enroll.data ?? []).map((e) => [e.student_id, e.group_id]));
   const count = new Map<string, number>();
   for (const e of enroll.data ?? []) count.set(e.group_id, (count.get(e.group_id) ?? 0) + 1);
@@ -122,6 +127,48 @@ export default async function TeacherHome() {
             </Card>
           ))
         )}
+
+        <Card className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <div className="flex items-baseline justify-between">
+              <p className="font-semibold">Hoy</p>
+              <Link href="/horario" className="min-h-10 content-center text-sm text-brand underline">
+                Mi horario
+              </Link>
+            </div>
+            {classesToday.length ? (
+              <ul className="mt-1 space-y-1 text-sm">
+                {classesToday.map((b) => (
+                  <li key={b.id}>
+                    <span className="num text-muted">{b.starts_at.slice(0, 5)}</span> {b.subjects?.name} · {label.get(b.group_id)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-sm text-muted">{isWeekday(today) ? "Sin horario cargado para hoy." : "Fin de semana."}</p>
+            )}
+          </div>
+          <div>
+            <div className="flex items-baseline justify-between">
+              <p className="font-semibold">Próximos 7 días</p>
+              <Link href="/calendario" className="min-h-10 content-center text-sm text-brand underline">
+                Calendario
+              </Link>
+            </div>
+            {upcoming.data?.length ? (
+              <ul className="mt-1 space-y-1 text-sm">
+                {upcoming.data.map((e) => (
+                  <li key={e.id}>
+                    <span className="num text-muted">{e.starts_on.slice(8)}/{e.starts_on.slice(5, 7)}</span> {e.title}
+                    {e.groups && ` · ${e.groups.grade}°${e.groups.name}`}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-sm text-muted">Nada agendado.</p>
+            )}
+          </div>
+        </Card>
 
         <Card className="flex items-center justify-between gap-3">
           <div>

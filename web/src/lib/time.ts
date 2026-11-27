@@ -38,3 +38,8 @@ export function previousMonthStart(date: string) {
 export function monthStart(date: string) {
   return `${date.slice(0, 7)}-01`;
 }
+
+/** Día de la semana ISO: 1 = lunes … 7 = domingo. */
+export function isoWeekday(date: string) {
+  return ((new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
+}

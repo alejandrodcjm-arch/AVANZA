@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rutas que se ven sin sesión.
-const PUBLIC = ["/entrar", "/invitacion", "/auth", "/aviso-de-privacidad", "/api/cron", "/manifest.webmanifest", "/sw.js", "/sin-conexion"];
+const PUBLIC = ["/entrar", "/invitacion", "/auth", "/aviso-de-privacidad", "/api/cron", "/api/calendario", "/manifest.webmanifest", "/sw.js", "/sin-conexion"];
 
 /** Refresca la sesión de Supabase en cada petición y manda a /entrar si no hay sesión. */
 export async function proxy(request: NextRequest) {
