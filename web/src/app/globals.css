@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Avanza: cuaderno escolar tranquilo. Sin rojos de alarma para los papás (docs/04 §1):
+   lo que requiere atención usa ámbar; el verde reconoce el avance. */
+@theme {
+  --color-paper: #f7f4ee;
+  --color-card: #ffffff;
+  --color-ink: #1f2a2c;
+  --color-muted: #5d6b6e;
+  --color-line: #e4ded3;
+  --color-brand: #1d4f57;
+  --color-brand-dark: #133a40;
+  --color-brand-soft: #e3eeee;
+  --color-care: #b7791f;
+  --color-care-soft: #fbf0dc;
+  --color-good: #3f7d5a;
+  --color-good-soft: #e5f1e9;
+  --color-danger: #a1402f;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-card: 1rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 17px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Objetivos táctiles de 44px como mínimo (WCAG 2.5.5) */
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-care);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

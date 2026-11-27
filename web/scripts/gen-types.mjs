@@ -4,13 +4,13 @@
 import pg from "pg";
 import { writeFileSync } from "node:fs";
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL ?? "postgres:///avanza_test" });
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL ?? "postgresql://root@/avanza_test?host=/var/run/postgresql" });
 await client.connect();
 
 const q = async (sql, params = []) => (await client.query(sql, params)).rows;
 
 const enums = await q(`
-  select t.typname as name, array_agg(e.enumlabel order by e.enumsortorder) as labels
+  select t.typname as name, array_agg(e.enumlabel::text order by e.enumsortorder) as labels
   from pg_type t join pg_enum e on e.enumtypid = t.oid join pg_namespace n on n.oid = t.typnamespace
   where n.nspname = 'public' group by t.typname order by t.typname`);
 const enumNames = new Set(enums.map((e) => e.name));
@@ -36,8 +36,8 @@ const columns = await q(`
 
 const fks = await q(`
   select con.conname, cl.relname as table_name, rcl.relname as ref_table,
-         array(select a.attname from unnest(con.conkey) k join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k) as cols,
-         array(select a.attname from unnest(con.confkey) k join pg_attribute a on a.attrelid = con.confrelid and a.attnum = k) as ref_cols,
+         array(select a.attname::text from unnest(con.conkey) k join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k) as cols,
+         array(select a.attname::text from unnest(con.confkey) k join pg_attribute a on a.attrelid = con.confrelid and a.attnum = k) as ref_cols,
          exists (select 1 from pg_constraint u where u.conrelid = con.conrelid and u.contype in ('u','p')
                  and u.conkey::int[] @> con.conkey::int[] and u.conkey::int[] <@ con.conkey::int[]) as one_to_one
   from pg_constraint con join pg_class cl on cl.oid = con.conrelid join pg_class rcl on rcl.oid = con.confrelid
@@ -46,8 +46,8 @@ const fks = await q(`
 
 const funcs = await q(`
   select p.proname as name, p.proretset as returns_set, rt.typname as ret,
-         coalesce(p.proargnames, '{}') as arg_names, p.proargmodes as modes,
-         array(select t.typname from unnest(p.proargtypes::oid[]) o join pg_type t on t.oid = o) as arg_types,
+         coalesce(p.proargnames, array[]::text[]) as arg_names, p.proargmodes as modes,
+         array(select t.typname::text from unnest(p.proargtypes::oid[]) with ordinality o(oid, n) join pg_type t on t.oid = o.oid order by o.n) as arg_types,
          p.pronargdefaults as n_defaults, p.pronargs as n_args
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace join pg_type rt on rt.oid = p.prorettype
   where n.nspname = 'public' and p.prokind = 'f'
