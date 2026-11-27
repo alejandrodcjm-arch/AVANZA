@@ -44,9 +44,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.4.0
       - name: Levantar Supabase local (migraciones + seed)
-        run: supabase start -x studio,edge-runtime,logflare,vector,imgproxy
+        run: supabase start -x studio,edge-runtime,logflare,vector,imgproxy,storage-api,realtime
       - name: Pruebas de permisos y lógica (pgTAP)
         run: supabase test db
       - uses: actions/setup-node@v4
@@ -62,7 +62,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}"
             echo "SUPABASE_SECRET_KEY=${SECRET_KEY:-$SERVICE_ROLE_KEY}"
-            echo "MAIL_URL=${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}"
+            echo "MAIL_URL=${MAILPIT_URL:-http://127.0.0.1:54324}"
           } >> "$GITHUB_ENV"
       - name: Build y flujos completos
         working-directory: web
