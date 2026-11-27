@@ -62,7 +62,7 @@ test("la maestra ve señales de apoyo con números y no puede ver el tablero del
 test("el director ve el tablero, las familias pendientes y la bitácora", async ({ page }) => {
   await login(page, "director@demo.mx");
   await expect(page).toHaveURL(/\/director$/);
-  await expect(page.getByText("alumnos con familia activa")).toBeVisible();
+  await expect(page.getByText("Alumnos con familia en la app")).toBeVisible();
   await page.goto("/director/escuela/bitacora");
   await expect(page.getByRole("heading", { name: "Bitácora" })).toBeVisible();
 });
@@ -156,6 +156,9 @@ test("la maestra agenda un examen; dirección ve horarios y cobranza; los maestr
   await page.context().clearCookies();
   await login(page, "director@demo.mx");
   await page.goto("/director/horarios");
+  await expect(page.getByRole("heading", { name: "Semana de 3°A" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Lunes" })).toBeVisible();
+  await page.getByRole("link", { name: "Editar" }).click();
   await expect(page.getByRole("button", { name: /Guardar horario de 3°A/ })).toBeVisible();
   await page.goto("/director/colegiaturas");
   await expect(page.getByRole("heading", { name: "Pagos vencidos" })).toBeVisible();
