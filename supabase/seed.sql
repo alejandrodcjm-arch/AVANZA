@@ -1,1 +1,167 @@
-select 1;
+-- Escuela de prueba para desarrollo y demos. NUNCA correr en producción.
+-- Usuarios (contraseña local: Demo1234!):
+--   director@demo.mx  laura@demo.mx (3A)  jorge@demo.mx (3B y 3C)
+--   papa@demo.mx (tutor de 2 hermanos, con aviso aceptado)  mama@demo.mx (sin aviso aceptado)
+
+do $$
+declare
+  v_school uuid := '11111111-1111-1111-1111-111111111111';
+  v_year uuid := '11111111-1111-1111-1111-111111111112';
+  v_t1 uuid := '11111111-1111-1111-1111-111111111113';
+  v_t2 uuid := '11111111-1111-1111-1111-111111111114';
+  v_t3 uuid := '11111111-1111-1111-1111-111111111115';
+  v_director uuid := '22222222-2222-2222-2222-222222222221';
+  v_laura uuid := '22222222-2222-2222-2222-222222222222';
+  v_jorge uuid := '22222222-2222-2222-2222-222222222223';
+  v_papa uuid := '22222222-2222-2222-2222-222222222224';
+  v_mama uuid := '22222222-2222-2222-2222-222222222225';
+  v_groups uuid[] := array['33333333-3333-3333-3333-333333333331'::uuid,
+                           '33333333-3333-3333-3333-333333333332'::uuid,
+                           '33333333-3333-3333-3333-333333333333'::uuid];
+  v_group_names text[] := array['A', 'B', 'C'];
+  v_subjects uuid[] := array['44444444-4444-4444-4444-444444444441'::uuid,
+                             '44444444-4444-4444-4444-444444444442'::uuid,
+                             '44444444-4444-4444-4444-444444444443'::uuid,
+                             '44444444-4444-4444-4444-444444444444'::uuid];
+  v_subject_names text[] := array['Lenguajes', 'Saberes y Pensamiento Científico',
+                                  'Ética, Naturaleza y Sociedades', 'De lo Humano y lo Comunitario'];
+  v_first text[] := array['Sofía','Mateo','Valentina','Santiago','Regina','Sebastián','Camila','Leonardo','Ximena','Emiliano',
+                          'Renata','Diego','Valeria','Daniel','Victoria','Iker','María José','Gael','Natalia','Rodrigo',
+                          'Fernanda','Alejandro','Andrea','Julián','Paula','Ángel','Isabella','Miguel','Romina','Luis'];
+  v_last text[] := array['Hernández','García','Martínez','López','González','Rodríguez','Pérez','Sánchez','Ramírez','Cruz',
+                         'Flores','Gómez','Morales','Vázquez','Reyes','Jiménez','Torres','Díaz','Gutiérrez','Ruiz',
+                         'Mendoza','Aguilar','Ortiz','Castillo','Soto','Chávez','Herrera','Medina','Rojas','Luna'];
+  u record;
+  g int; i int; idx int;
+  v_student uuid; v_teacher uuid; v_day date; v_roll int; v_status public.attendance_status;
+  v_base numeric; v_score numeric; s int; a uuid; k int;
+begin
+  -- Usuarios de Auth (el disparador crea sus perfiles)
+  for u in select * from (values
+      (v_director, 'director@demo.mx', 'Patricia Morales (Directora)'),
+      (v_laura, 'laura@demo.mx', 'Laura Castillo'),
+      (v_jorge, 'jorge@demo.mx', 'Jorge Medina'),
+      (v_papa, 'papa@demo.mx', 'Roberto Ramírez'),
+      (v_mama, 'mama@demo.mx', 'Claudia Ortiz')) as t(id, email, name)
+  loop
+    insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+                            raw_app_meta_data, raw_user_meta_data, confirmation_token, recovery_token,
+                            email_change, email_change_token_new, created_at, updated_at)
+    values ('00000000-0000-0000-0000-000000000000', u.id, 'authenticated', 'authenticated', u.email,
+            extensions.crypt('Demo1234!', extensions.gen_salt('bf')), now(),
+            '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', u.name),
+            '', '', '', '', now(), now());
+    if to_regclass('auth.identities') is not null then
+      execute 'insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+               values (gen_random_uuid(), $1, $1::text, jsonb_build_object(''sub'', $1::text, ''email'', $2), ''email'', now(), now(), now())'
+        using u.id, u.email;
+    end if;
+  end loop;
+
+  insert into public.schools (id, name, cct, privacy_notice_version)
+  values (v_school, 'Colegio Demo Durango', '10PPR0000X', '2026-11');
+
+  insert into public.memberships (school_id, user_id, role) values
+    (v_school, v_director, 'director'), (v_school, v_laura, 'teacher'), (v_school, v_jorge, 'teacher'),
+    (v_school, v_papa, 'guardian'), (v_school, v_mama, 'guardian');
+
+  insert into public.school_years (id, school_id, name, starts_on, ends_on, is_current)
+  values (v_year, v_school, '2026-2027', '2026-08-31', '2027-07-15', true);
+
+  insert into public.periods (id, school_id, school_year_id, name, sort, starts_on, ends_on) values
+    (v_t1, v_school, v_year, 'Trimestre 1', 1, '2026-08-31', '2026-11-27'),
+    (v_t2, v_school, v_year, 'Trimestre 2', 2, '2026-11-30', '2027-03-12'),
+    (v_t3, v_school, v_year, 'Trimestre 3', 3, '2027-03-15', '2027-07-15');
+
+  for s in 1..4 loop
+    insert into public.subjects (id, school_id, name) values (v_subjects[s], v_school, v_subject_names[s]);
+  end loop;
+
+  for g in 1..3 loop
+    insert into public.groups (id, school_id, school_year_id, grade, name)
+    values (v_groups[g], v_school, v_year, 3, v_group_names[g]);
+    v_teacher := case when g = 1 then v_laura else v_jorge end;
+    for s in 1..4 loop
+      insert into public.teaching_assignments (school_id, group_id, subject_id, teacher_id, is_homeroom)
+      values (v_school, v_groups[g], v_subjects[s], v_teacher, s = 1);
+    end loop;
+  end loop;
+
+  -- 90 alumnos, 30 por grupo, con datos determinísticos (siempre iguales)
+  for g in 1..3 loop
+    v_teacher := case when g = 1 then v_laura else v_jorge end;
+    for i in 1..30 loop
+      idx := (g - 1) * 30 + i;
+      v_student := ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid;
+      insert into public.students (id, school_id, first_name, last_name, second_last_name)
+      values (v_student, v_school, v_first[1 + (i * 7 + g * 11) % 30], v_last[1 + (i * 11 + g * 7) % 30], v_last[1 + (i * 13 + g * 17) % 30]);
+      insert into public.enrollments (school_id, student_id, group_id, school_year_id)
+      values (v_school, v_student, v_groups[g], v_year);
+
+      -- Asistencia del 1 de septiembre al 25 de noviembre, días hábiles sin festivos
+      for v_day in select d::date from generate_series('2026-09-01'::date, '2026-11-25'::date, interval '1 day') d
+                   where extract(isodow from d) < 6 and d::date not in ('2026-09-16', '2026-11-16')
+      loop
+        v_roll := abs(hashtext(v_student::text || v_day::text)) % 100;
+        v_status := case
+          when idx % 15 = 0 and v_roll < 18 then 'absent'
+          when idx % 15 <> 0 and v_roll < 3 then 'absent'
+          when v_roll between 95 and 96 then 'late'
+          else 'present' end;
+        insert into public.attendance (school_id, student_id, group_id, date, status, recorded_by)
+        values (v_school, v_student, v_groups[g], v_day, v_status, v_teacher);
+      end loop;
+
+      -- Calificaciones del trimestre 1
+      v_base := 6.5 + (abs(hashtext(v_student::text)) % 33) / 10.0;
+      for s in 1..4 loop
+        v_score := least(10, greatest(5, round((v_base + ((abs(hashtext(v_student::text || s::text)) % 15) - 7) / 10.0)::numeric, 1)));
+        if s = 2 and idx % 13 = 0 then v_score := 5.5; end if;
+        insert into public.grades (school_id, student_id, subject_id, period_id, score, recorded_by)
+        values (v_school, v_student, v_subjects[s], v_t1, v_score, v_teacher);
+      end loop;
+    end loop;
+  end loop;
+
+  -- Tareas de Saberes y Pensamiento Científico en noviembre; alumnos con idx % 11 = 0 no entregan 4
+  for g in 1..3 loop
+    v_teacher := case when g = 1 then v_laura else v_jorge end;
+    for k in 1..6 loop
+      insert into public.assignments (school_id, group_id, subject_id, title, due_on, created_by)
+      values (v_school, v_groups[g], v_subjects[2], 'Ejercicios de fracciones ' || k, ('2026-11-02'::date + (k * 3)), v_teacher)
+      returning id into a;
+      for i in 1..30 loop
+        idx := (g - 1) * 30 + i;
+        if idx % 11 = 0 and k <= 4 then
+          insert into public.assignment_misses (school_id, assignment_id, student_id, created_by)
+          values (v_school, a, ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid, v_teacher);
+        end if;
+      end loop;
+    end loop;
+  end loop;
+
+  -- Reportes de conducta: alumnos con idx % 17 = 0 tienen 2 en noviembre
+  for idx in select x from generate_series(1, 90) x where x % 17 = 0 loop
+    v_student := ('55555555-5555-5555-5555-' || lpad(idx::text, 12, '0'))::uuid;
+    v_teacher := case when idx <= 30 then v_laura else v_jorge end;
+    insert into public.behavior_reports (school_id, student_id, occurred_on, severity, description, created_by) values
+      (v_school, v_student, '2026-11-10', 'minor', 'Interrumpió la clase varias veces.', v_teacher),
+      (v_school, v_student, '2026-11-19', 'moderate', 'Discusión con un compañero en el recreo.', v_teacher);
+  end loop;
+
+  insert into public.observations (school_id, student_id, body, created_by) values
+    (v_school, '55555555-5555-5555-5555-000000000001', 'Participa con entusiasmo en lectura en voz alta.', v_laura),
+    (v_school, '55555555-5555-5555-5555-000000000031', 'Mejoró mucho su orden en el cuaderno este mes.', v_jorge);
+
+  -- Familias de prueba: papá con dos hijos (3A y 3B) y mamá sin aviso aceptado
+  insert into public.student_guardians (school_id, student_id, guardian_id, relationship) values
+    (v_school, '55555555-5555-5555-5555-000000000001', v_papa, 'padre'),
+    (v_school, '55555555-5555-5555-5555-000000000031', v_papa, 'padre'),
+    (v_school, '55555555-5555-5555-5555-000000000002', v_mama, 'madre');
+  insert into public.consents (school_id, user_id, notice_version) values (v_school, v_papa, '2026-11');
+  -- Los hermanos llevan los apellidos de su papá
+  update public.students set last_name = 'Ramírez', second_last_name = 'Soto'
+  where id in ('55555555-5555-5555-5555-000000000001', '55555555-5555-5555-5555-000000000031');
+  update public.students set last_name = 'Ortiz', second_last_name = 'Luna'
+  where id = '55555555-5555-5555-5555-000000000002';
+end $$;

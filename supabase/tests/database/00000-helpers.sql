@@ -36,6 +36,14 @@ begin
   perform set_config('role', 'anon', true);
 end $$;
 
+-- Vuelve a la conexión del sistema (sin sesión de usuario), como corre pg_cron.
+create or replace function tests.logout()
+returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', '', true);
+  perform set_config('role', 'none', true);
+end $$;
+
 -- Ejecuta un UPDATE/DELETE como el usuario actual y regresa cuántas filas tocó (RLS filtra en silencio).
 create or replace function tests.rows_affected(p_sql text)
 returns integer language plpgsql as $$
