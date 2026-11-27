@@ -42,3 +42,22 @@ export async function groupStudents(supabase: ServerClient, groupId: string) {
       `${a.last_name} ${a.second_last_name ?? ""} ${a.first_name}`.localeCompare(`${b.last_name} ${b.second_last_name ?? ""} ${b.first_name}`, "es"),
     );
 }
+
+/** Para selectores: nombre completo y nombre corto ("Sofía R."), distinguiendo homónimos. */
+export function pickList(students: { id: string; first_name: string; last_name: string; second_last_name: string | null }[]) {
+  const firsts = new Map<string, number>();
+  students.forEach((s) => firsts.set(s.first_name, (firsts.get(s.first_name) ?? 0) + 1));
+  return students.map((s) => ({
+    id: s.id,
+    name: `${s.first_name} ${s.last_name} ${s.second_last_name ?? ""}`.trim(),
+    short: (firsts.get(s.first_name) ?? 0) > 1 ? `${s.first_name} ${s.last_name}` : `${s.first_name} ${s.last_name[0]}.`,
+  }));
+}
+
+/** Lunes de la semana (YYYY-MM-DD). */
+export function weekStart(date: string) {
+  const d = new Date(`${date}T12:00:00Z`);
+  const dow = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+}

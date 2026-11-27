@@ -46,6 +46,7 @@ export function allowedNumbers(s: Snapshot): Set<number> {
     if (g.previous !== null) add(Math.abs(g.score - g.previous));
   }
   for (const m of s.missed_assignments) add(m.count);
+  for (const r of s.recognitions ?? []) add(r.count);
   add(s.missed_assignments.reduce((t, m) => t + m.count, 0));
   add(s.grades.length);
   for (const text of [...s.teacher_observations, s.monthly_goal?.goal ?? ""]) {

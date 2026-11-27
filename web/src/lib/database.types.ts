@@ -230,6 +230,7 @@ export type Database = {
           due_on: string;
           created_by: string | null;
           created_at: string;
+          source: string;
         };
         Insert: {
           id?: string;
@@ -240,6 +241,7 @@ export type Database = {
           due_on: string;
           created_by?: string | null;
           created_at?: string;
+          source?: string;
         };
         Update: {
           id?: string;
@@ -250,6 +252,7 @@ export type Database = {
           due_on?: string;
           created_by?: string | null;
           created_at?: string;
+          source?: string;
         };
         Relationships: [
           {
@@ -398,6 +401,9 @@ export type Database = {
           description: string;
           created_by: string | null;
           created_at: string;
+          incident_id: string | null;
+          involvement: Database["public"]["Enums"]["involvement"];
+          family_notified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -408,6 +414,9 @@ export type Database = {
           description: string;
           created_by?: string | null;
           created_at?: string;
+          incident_id?: string | null;
+          involvement?: Database["public"]["Enums"]["involvement"];
+          family_notified_at?: string | null;
         };
         Update: {
           id?: string;
@@ -418,6 +427,9 @@ export type Database = {
           description?: string;
           created_by?: string | null;
           created_at?: string;
+          incident_id?: string | null;
+          involvement?: Database["public"]["Enums"]["involvement"];
+          family_notified_at?: string | null;
         };
         Relationships: [
           {
@@ -425,6 +437,13 @@ export type Database = {
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "behavior_reports_incident_id_fkey";
+            columns: ["incident_id"];
+            isOneToOne: false;
+            referencedRelation: "incidents";
             referencedColumns: ["id"];
           },
           {
@@ -530,6 +549,7 @@ export type Database = {
           opened_by: string | null;
           opened_at: string;
           closed_at: string | null;
+          incident_id: string | null;
         };
         Insert: {
           id?: string;
@@ -543,6 +563,7 @@ export type Database = {
           opened_by?: string | null;
           opened_at?: string;
           closed_at?: string | null;
+          incident_id?: string | null;
         };
         Update: {
           id?: string;
@@ -556,6 +577,7 @@ export type Database = {
           opened_by?: string | null;
           opened_at?: string;
           closed_at?: string | null;
+          incident_id?: string | null;
         };
         Relationships: [
           {
@@ -563,6 +585,13 @@ export type Database = {
             columns: ["alert_id"];
             isOneToOne: false;
             referencedRelation: "alerts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cases_incident_id_fkey";
+            columns: ["incident_id"];
+            isOneToOne: false;
+            referencedRelation: "incidents";
             referencedColumns: ["id"];
           },
           {
@@ -683,6 +712,68 @@ export type Database = {
             columns: ["student_id"];
             isOneToOne: false;
             referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      gradebook_uploads: {
+        Row: {
+          id: string;
+          school_id: string;
+          group_id: string;
+          subject_id: string;
+          file_name: string;
+          summary: Json;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          group_id: string;
+          subject_id: string;
+          file_name: string;
+          summary?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          group_id?: string;
+          subject_id?: string;
+          file_name?: string;
+          summary?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "gradebook_uploads_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gradebook_uploads_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gradebook_uploads_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gradebook_uploads_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
             referencedColumns: ["id"];
           },
         ];
@@ -919,6 +1010,63 @@ export type Database = {
           },
           {
             foreignKeyName: "imports_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      incidents: {
+        Row: {
+          id: string;
+          school_id: string;
+          occurred_on: string;
+          occurred_time: string | null;
+          location: Database["public"]["Enums"]["incident_location"];
+          category: Database["public"]["Enums"]["incident_category"];
+          severity: Database["public"]["Enums"]["behavior_severity"];
+          description: string;
+          action_taken: Database["public"]["Enums"]["incident_action"];
+          reported_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          occurred_on: string;
+          occurred_time?: string | null;
+          location?: Database["public"]["Enums"]["incident_location"];
+          category: Database["public"]["Enums"]["incident_category"];
+          severity?: Database["public"]["Enums"]["behavior_severity"];
+          description: string;
+          action_taken?: Database["public"]["Enums"]["incident_action"];
+          reported_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          occurred_on?: string;
+          occurred_time?: string | null;
+          location?: Database["public"]["Enums"]["incident_location"];
+          category?: Database["public"]["Enums"]["incident_category"];
+          severity?: Database["public"]["Enums"]["behavior_severity"];
+          description?: string;
+          action_taken?: Database["public"]["Enums"]["incident_action"];
+          reported_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "incidents_reported_by_fkey";
+            columns: ["reported_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "incidents_school_id_fkey";
             columns: ["school_id"];
             isOneToOne: false;
             referencedRelation: "schools";
@@ -1301,6 +1449,58 @@ export type Database = {
           },
         ];
       };
+      recognitions: {
+        Row: {
+          id: string;
+          school_id: string;
+          student_id: string;
+          category: Database["public"]["Enums"]["recognition_category"];
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          student_id: string;
+          category: Database["public"]["Enums"]["recognition_category"];
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          student_id?: string;
+          category?: Database["public"]["Enums"]["recognition_category"];
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recognitions_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognitions_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recognitions_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       school_years: {
         Row: {
           id: string;
@@ -1654,6 +1854,71 @@ export type Database = {
           },
         ];
       };
+      weekly_pending: {
+        Row: {
+          id: string;
+          school_id: string;
+          student_id: string;
+          subject_id: string;
+          week_start: string;
+          pending_count: number;
+          note: string | null;
+          recorded_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          student_id: string;
+          subject_id: string;
+          week_start: string;
+          pending_count: number;
+          note?: string | null;
+          recorded_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          student_id?: string;
+          subject_id?: string;
+          week_start?: string;
+          pending_count?: number;
+          note?: string | null;
+          recorded_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "weekly_pending_recorded_by_fkey";
+            columns: ["recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_pending_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_pending_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_pending_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       v_student_grade_trend: {
@@ -1708,14 +1973,22 @@ export type Database = {
       dismiss_alert: { Args: { p_alert: string; p_note: string }; Returns: undefined };
       escalate_case: { Args: { p_case: string }; Returns: undefined };
       export_my_data: { Args: never; Returns: Json };
+      give_recognition: { Args: { p_students: string[]; p_category: Database["public"]["Enums"]["recognition_category"]; p_note?: string }; Returns: number };
+      import_gradebook: { Args: { p_group: string; p_subject: string; p_file_name: string; p_activities: Json }; Returns: Json };
       import_roster: { Args: { p_school: string; p_rows: Json; p_file_name?: string }; Returns: Json };
       invitation_preview: { Args: { p_token: string }; Returns: Json };
       log_student_view: { Args: { p_student: string }; Returns: undefined };
       mark_invitations_sent: { Args: { p_ids: string[] }; Returns: undefined };
       renew_invitation: { Args: { p_invitation: string }; Returns: Json };
+      report_attendance: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
+      report_behavior: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
+      report_grades: { Args: { p_school: string; p_period: string }; Returns: Json };
+      report_incident: { Args: { p_involved: string[]; p_affected: string[]; p_occurred_on: string; p_time: string; p_location: Database["public"]["Enums"]["incident_location"]; p_category: Database["public"]["Enums"]["incident_category"]; p_severity: Database["public"]["Enums"]["behavior_severity"]; p_description: string; p_action: Database["public"]["Enums"]["incident_action"]; p_family_note: string }; Returns: string };
+      report_staff: { Args: { p_school: string; p_from: string; p_to: string }; Returns: Json };
       save_attendance: { Args: { p_group: string; p_date: string; p_exceptions: Json }; Returns: number };
       save_grades: { Args: { p_subject: string; p_period: string; p_scores: Json }; Returns: number };
       save_summary_draft: { Args: { p_summary: string; p_text: string; p_errors: Json; p_prompt_version: string; p_model: string }; Returns: undefined };
+      save_weekly_pending: { Args: { p_group: string; p_subject: string; p_week: string; p_counts: Json }; Returns: number };
       set_assignment_misses: { Args: { p_assignment: string; p_students: string[] }; Returns: number };
       student_overview: { Args: { p_student: string; p_today?: string }; Returns: Json };
     };
@@ -1729,8 +2002,13 @@ export type Database = {
       behavior_severity: "minor" | "moderate" | "serious";
       case_status: "open" | "escalated" | "closed";
       import_status: "preview" | "committed" | "failed";
+      incident_action: "platica" | "llamada_atencion" | "aviso_familia" | "citatorio" | "reparacion" | "suspension" | "canalizacion" | "ninguna";
+      incident_category: "interrupcion" | "incumplimiento" | "falta_respeto" | "agresion_verbal" | "agresion_fisica" | "acoso" | "dano_material" | "celular" | "deshonestidad" | "otra";
+      incident_location: "salon" | "patio" | "banos" | "pasillos" | "entrada_salida" | "comedor" | "deportes" | "transporte" | "en_linea" | "otro";
+      involvement: "involucrado" | "afectado";
       member_role: "director" | "teacher" | "guardian";
       notification_kind: "alert" | "weekly_digest" | "monthly_summary" | "case_update" | "system";
+      recognition_category: "respeto" | "responsabilidad" | "esfuerzo" | "colaboracion" | "mejora" | "liderazgo";
       summary_status: "draft" | "needs_manual" | "approved";
     };
     CompositeTypes: { [_ in never]: never };

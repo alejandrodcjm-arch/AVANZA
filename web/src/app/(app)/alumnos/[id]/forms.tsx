@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
-import { addBehavior, addObservation, addSensitiveNote } from "../actions";
+import { Button, Field, Notice, Textarea } from "@/components/ui";
+import { addObservation, addSensitiveNote } from "../actions";
 
-type Kind = "observation" | "behavior" | "sensitive";
+type Kind = "observation" | "sensitive";
 
-export function StaffNotes({ studentId, firstName, today }: { studentId: string; firstName: string; today: string }) {
+export function StaffNotes({ studentId, firstName }: { studentId: string; firstName: string }) {
   const [kind, setKind] = useState<Kind | null>(null);
   return (
     <div>
@@ -14,16 +14,12 @@ export function StaffNotes({ studentId, firstName, today }: { studentId: string;
         <Button variant={kind === "observation" ? "primary" : "secondary"} onClick={() => setKind("observation")}>
           Observación
         </Button>
-        <Button variant={kind === "behavior" ? "primary" : "secondary"} onClick={() => setKind("behavior")}>
-          Reporte de conducta
-        </Button>
         <Button variant={kind === "sensitive" ? "primary" : "secondary"} onClick={() => setKind("sensitive")}>
           Nota confidencial
         </Button>
       </div>
       <div className="mt-4">
         {kind === "observation" && <ObservationForm key="o" studentId={studentId} firstName={firstName} />}
-        {kind === "behavior" && <BehaviorForm key="b" studentId={studentId} today={today} />}
         {kind === "sensitive" && <SensitiveForm key="s" studentId={studentId} />}
       </div>
     </div>
@@ -40,32 +36,6 @@ function ObservationForm({ studentId, firstName }: { studentId: string; firstNam
       </Field>
       {state.error && <Notice tone="error">{state.error}</Notice>}
       <Button disabled={pending}>Guardar observación</Button>
-    </form>
-  );
-}
-
-function BehaviorForm({ studentId, today }: { studentId: string; today: string }) {
-  const [state, action, pending] = useActionState(addBehavior.bind(null, studentId), { error: "" });
-  if (state.ok) return <Notice tone="good">Reporte guardado.</Notice>;
-  return (
-    <form action={action} className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Fecha">
-          <Input type="date" name="occurred_on" defaultValue={today} max={today} required />
-        </Field>
-        <Field label="Gravedad">
-          <Select name="severity" defaultValue="minor">
-            <option value="minor">Leve</option>
-            <option value="moderate">Moderada</option>
-            <option value="serious">Grave</option>
-          </Select>
-        </Field>
-      </div>
-      <Field label="Qué pasó" hint="Describa la conducta, no a la persona. Ej. «interrumpió la clase 3 veces», no «es grosero».">
-        <Textarea name="description" required minLength={5} maxLength={1000} />
-      </Field>
-      {state.error && <Notice tone="error">{state.error}</Notice>}
-      <Button disabled={pending}>Guardar reporte</Button>
     </form>
   );
 }

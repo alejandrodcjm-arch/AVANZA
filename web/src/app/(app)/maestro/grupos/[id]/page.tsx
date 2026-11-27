@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, PageHeader } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { groupStudents } from "@/lib/teacher";
@@ -8,15 +8,14 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   await requireRole("teacher", "director");
   const supabase = await createClient();
-  const [{ data: g }, students, { data: alerts }] = await Promise.all([
-    supabase.from("groups").select("grade, name").eq("id", id).maybeSingle(),
+  const [students, { data: alerts }] = await Promise.all([
     groupStudents(supabase, id),
     supabase.from("alerts").select("student_id").eq("status", "open"),
   ]);
   const flagged = new Set((alerts ?? []).map((a) => a.student_id));
   return (
     <>
-      <PageHeader title={g ? `${g.grade}°${g.name}` : "Grupo"} subtitle={`${students.length} alumnos`} back="/maestro" />
+      <p className="mb-3 text-muted">{students.length} alumnos · toque un nombre para ver su ficha completa.</p>
       <Card className="p-0">
         <ul className="divide-y divide-line">
           {students.map((s, i) => (

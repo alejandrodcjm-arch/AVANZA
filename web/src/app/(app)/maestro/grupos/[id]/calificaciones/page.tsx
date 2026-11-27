@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Empty, PageHeader, cx } from "@/components/ui";
+import { Empty, cx } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { groupStudents, teacherGroups } from "@/lib/teacher";
@@ -36,7 +36,7 @@ export default async function GradesPage({ params, searchParams }: { params: Pro
 
   return (
     <>
-      <PageHeader title={`Calificaciones ${group.label}`} subtitle="Escala de 5 a 10. Deje vacío si aún no la tiene." back="/maestro" />
+      <p className="mb-3 text-muted">Escala de 5 a 10. Deje vacío si aún no la tiene. ¿Ya las tiene en Excel? <Link href={`/maestro/grupos/${id}/excel`} className="font-medium text-brand underline">Súbalo</Link>.</p>
       <nav className="mb-3 flex gap-2 overflow-x-auto pb-1" aria-label="Materia">
         {group.subjects.map((s) => (
           <Link key={s.id} href={q(s.id, period.id)} className={cx("min-h-10 shrink-0 content-center rounded-full px-4 text-sm", s.id === subject.id ? "bg-brand text-white" : "bg-card ring-1 ring-line")}>

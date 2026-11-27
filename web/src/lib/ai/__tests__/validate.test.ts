@@ -15,6 +15,7 @@ const snap: Snapshot = {
   ],
   missed_assignments: [{ subject: "Saberes y Pensamiento Científico", count: 3 }],
   behavior_reports: 0,
+  recognitions: [{ category: "Esfuerzo", count: 3 }],
   teacher_observations: ["Participa en lectura en voz alta."],
   monthly_goal: { goal: "Leer 20 minutos diarios", achieved: true },
 };

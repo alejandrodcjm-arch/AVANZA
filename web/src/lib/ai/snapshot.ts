@@ -22,6 +22,7 @@ export const snapshotSchema = z.object({
   ),
   missed_assignments: z.array(z.object({ subject: z.string(), count: z.number() })),
   behavior_reports: z.number(),
+  recognitions: z.array(z.object({ category: z.string(), count: z.number() })).default([]),
   teacher_observations: z.array(z.string()),
   monthly_goal: z.object({ goal: z.string(), achieved: z.boolean().nullable() }).nullable(),
 });

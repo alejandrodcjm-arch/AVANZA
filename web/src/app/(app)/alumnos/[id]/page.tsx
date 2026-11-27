@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { AlertActions } from "@/components/alert-actions";
 import { Badge, Card, PageHeader, Stat, Trend } from "@/components/ui";
 import { INDICATOR_LABEL, describeAlert } from "@/lib/alerts";
+import { ACTION_LABEL, CATEGORY_LABEL, LOCATION_LABEL } from "@/lib/convivencia";
 import { requireRole } from "@/lib/auth";
 import { formatDate, formatMonth, formatScore, formatShortDate, studentName } from "@/lib/format";
 import type { Overview } from "@/lib/overview";
 import { createClient } from "@/lib/supabase/server";
 import { todayLocal } from "@/lib/time";
 import { StaffNotes } from "./forms";
+import { WeekStrip } from "@/components/week-strip";
 
 const SEVERITY = { minor: "Leve", moderate: "Moderada", serious: "Grave" } as const;
 const CASE_STATUS = { open: "Abierto", escalated: "Con dirección", closed: "Cerrado" } as const;
@@ -24,7 +26,7 @@ export default async function StaffStudentPage({ params }: { params: Promise<{ i
 
   const [alerts, behavior, observations, notes, cases, guardians] = await Promise.all([
     supabase.from("alerts").select("id, indicator, detail, created_at").eq("student_id", id).eq("status", "open"),
-    supabase.from("behavior_reports").select("id, occurred_on, severity, description").eq("student_id", id).order("occurred_on", { ascending: false }).limit(10),
+    supabase.from("behavior_reports").select("id, occurred_on, severity, description, involvement, incidents(category, location, description, action_taken, occurred_time)").eq("student_id", id).order("occurred_on", { ascending: false }).limit(10),
     supabase.from("observations").select("id, body, created_at, profiles:created_by(full_name)").eq("student_id", id).order("created_at", { ascending: false }).limit(10),
     supabase.from("sensitive_notes").select("id, body, created_at, profiles:created_by(full_name)").eq("student_id", id).order("created_at", { ascending: false }).limit(10),
     supabase.from("cases").select("id, status, summary, opened_at").eq("student_id", id).order("opened_at", { ascending: false }),
@@ -59,6 +61,17 @@ export default async function StaffStudentPage({ params }: { params: Promise<{ i
         </Card>
 
         <Card>
+          <h2 className="mb-3 font-semibold">Esta semana</h2>
+          <WeekStrip days={o.week.days} today={today} />
+          <p className="mt-3 text-sm text-muted">
+            {o.week.pending.length === 0
+              ? "Sin corte de pendientes esta semana."
+              : o.week.pending.filter((p) => p.count > 0).map((p) => `${p.count} pendientes de ${p.subject}`).join(" · ") || "Al corriente en sus trabajos."}
+            {o.recognitions.length > 0 && ` · ${o.recognitions.length} reconocimientos en 60 días`}
+          </p>
+        </Card>
+
+        <Card>
           <h2 className="font-semibold">Calificaciones</h2>
           {o.grades.length ? (
             <ul className="mt-2 divide-y divide-line">
@@ -79,7 +92,16 @@ export default async function StaffStudentPage({ params }: { params: Promise<{ i
 
         <Card>
           <h2 className="mb-3 font-semibold">Registrar</h2>
-          <StaffNotes studentId={id} firstName={o.student.first_name} today={today} />
+          <StaffNotes studentId={id} firstName={o.student.first_name} />
+          {o.group && (
+            <p className="mt-3 text-sm text-muted">
+              Incidencias y reconocimientos: en{" "}
+              <Link href={`/maestro/grupos/${o.group.id}/conducta`} className="font-medium text-brand underline">
+                Conducta del grupo
+              </Link>
+              .
+            </p>
+          )}
         </Card>
 
         {o.goal && (
@@ -126,14 +148,19 @@ export default async function StaffStudentPage({ params }: { params: Promise<{ i
 
         {(behavior.data ?? []).length > 0 && (
           <Card>
-            <h2 className="font-semibold">Reportes de conducta</h2>
+            <h2 className="font-semibold">Conducta</h2>
             <ul className="mt-2 space-y-3">
               {behavior.data!.map((b) => (
                 <li key={b.id}>
                   <p>
                     <Badge tone={b.severity === "minor" ? "muted" : "care"}>{SEVERITY[b.severity]}</Badge> <span className="text-sm text-muted">{formatShortDate(b.occurred_on)}</span>
                   </p>
-                  <p className="mt-1">{b.description}</p>
+                  <p className="mt-1">
+                    {b.involvement === "afectado" && <strong>Afectado · </strong>}
+                    {b.incidents ? `${CATEGORY_LABEL[b.incidents.category]} · ${LOCATION_LABEL[b.incidents.location]}${b.incidents.occurred_time ? ` · ${b.incidents.occurred_time.slice(0, 5)}` : ""}` : b.description}
+                  </p>
+                  {b.incidents && <p className="text-sm text-ink/80">{b.incidents.description}</p>}
+                  {b.incidents && <p className="text-sm text-muted">Acción: {ACTION_LABEL[b.incidents.action_taken]} · La familia ve: «{b.description}»</p>}
                 </li>
               ))}
             </ul>

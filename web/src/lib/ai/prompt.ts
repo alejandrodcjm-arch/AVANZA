@@ -22,7 +22,7 @@ Devuelve seis partes:
 - como_va: 1 o 2 frases de cómo le fue en el mes, empezando por algo positivo y verdadero.
 - asistencia: las faltas y retardos exactos del mes y las faltas acumuladas del periodo.
 - calificaciones: cada materia con su calificación y si subió, bajó o se mantuvo respecto al periodo anterior. Si no hay, dilo.
-- logro: un logro concreto (puede venir de las observaciones de la maestra o de una mejora en los datos).
+- logro: un logro concreto (puede venir de las observaciones de la maestra, de sus reconocimientos o de una mejora en los datos).
 - a_mejorar: un solo punto a mejorar y la acción concreta para esta semana.
 - pregunta: una pregunta abierta para que el papá platique con su hijo en casa; termina en signo de interrogación.
 
@@ -50,6 +50,7 @@ ${JSON.stringify(
     })),
     tareas_no_entregadas_del_mes: s.missed_assignments.map((m) => ({ materia: m.subject, cantidad: m.count })),
     reportes_de_conducta_del_mes: s.behavior_reports,
+    reconocimientos_del_mes: s.recognitions.map((r) => ({ por: r.category, veces: r.count })),
     observaciones_de_la_maestra: s.teacher_observations,
     meta_del_mes: s.monthly_goal ? { meta: s.monthly_goal.goal, cumplida: s.monthly_goal.achieved } : null,
   },

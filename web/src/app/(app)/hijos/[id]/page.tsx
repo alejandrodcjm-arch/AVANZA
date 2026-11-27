@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Sparkline } from "@/components/charts";
 import { Badge, Button, Card, PageHeader, Stat, Trend } from "@/components/ui";
+import { WeekStrip } from "@/components/week-strip";
 import { requireRole } from "@/lib/auth";
+import { RECOGNITION } from "@/lib/convivencia";
 import { formatDate, formatMonth, formatScore, formatShortDate, plural } from "@/lib/format";
 import type { Overview } from "@/lib/overview";
 import { createClient } from "@/lib/supabase/server";
 import { monthStart, todayLocal } from "@/lib/time";
 import { markGoal } from "./actions";
 import { GoalForm } from "./goal-form";
+
+const SEVERITY = { minor: "Leve", moderate: "Moderada", serious: "Grave" } as const;
 
 export default async function ChildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,17 +22,63 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
   const { data, error } = await supabase.rpc("student_overview", { p_student: id, p_today: today });
   if (error || !data) notFound();
   const o = data as unknown as Overview;
+  const name = o.student.first_name;
   const a = o.attendance;
   const thisMonth = monthStart(today);
   const goalThisMonth = o.goal && o.goal.month === thisMonth ? o.goal : null;
   const lastGoal = o.goal && o.goal.month < thisMonth ? o.goal : null;
   const latest = o.summaries[0];
+  const weekPending = o.week.pending.filter((p) => p.count > 0);
+  const weekRecs = o.recognitions.filter((r) => r.date >= o.week.start);
+  const weekReports = o.behavior.filter((b) => b.date >= o.week.start && b.involvement === "involucrado");
+  const history = new Map(o.grade_history.map((h) => [h.subject, h.points]));
+  const icon = (cat: string) => RECOGNITION.find((r) => r.key === cat)?.icon ?? "⭐";
 
   return (
     <>
-      <PageHeader title={o.student.first_name} subtitle={[o.group?.label, o.period?.name].filter(Boolean).join(" · ")} back="/hijos" />
+      <PageHeader title={name} subtitle={[o.group?.label, o.period?.name].filter(Boolean).join(" · ")} back="/hijos" />
 
       <div className="space-y-4">
+        {/* La semana: lo primero que un papá quiere saber */}
+        <Card>
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-lg font-semibold">Esta semana</h2>
+            <span className="text-sm text-muted">desde el {formatShortDate(o.week.start)}</span>
+          </div>
+          <WeekStrip days={o.week.days} today={today} />
+          <ul className="mt-4 space-y-2">
+            <li className="flex items-start gap-2">
+              <span aria-hidden>{weekPending.length ? "📝" : "✅"}</span>
+              <span>
+                {o.week.pending.length === 0
+                  ? "La maestra aún no hace el corte de pendientes de esta semana."
+                  : weekPending.length
+                    ? `Trabajos pendientes: ${weekPending.map((p) => `${p.count} de ${p.subject}`).join(", ")}.`
+                    : "Entregó todos sus trabajos."}
+              </span>
+            </li>
+            {weekRecs.length > 0 && (
+              <li className="flex items-start gap-2">
+                <span aria-hidden>⭐</span>
+                <span>Reconocido por {[...new Set(weekRecs.map((r) => r.label.toLowerCase()))].join(", ")}.</span>
+              </li>
+            )}
+            {weekReports.length > 0 && (
+              <li className="flex items-start gap-2">
+                <span aria-hidden>💬</span>
+                <a href="#conducta" className="underline">
+                  {plural(weekReports.length, "reporte de conducta", "reportes de conducta")} esta semana
+                </a>
+              </li>
+            )}
+          </ul>
+          {weekPending.length > 0 && (
+            <p className="mt-3 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">
+              Para casa: pregúntele qué parte se le complicó y acuerden una hora fija para hacer tarea. No hace falta hacerla por {name}.
+            </p>
+          )}
+        </Card>
+
         {latest && (
           <Link href={`/hijos/${id}/resumenes/${latest.id}`} className="block">
             <Card className="bg-brand text-white ring-brand">
@@ -35,6 +86,27 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
               <p className="mt-1 text-lg font-semibold">Lo que la maestra quiere que sepa este mes →</p>
             </Card>
           </Link>
+        )}
+
+        {o.recognitions.length > 0 && (
+          <Card>
+            <h2 className="font-semibold">Reconocimientos</h2>
+            <ul className="mt-2 space-y-2">
+              {o.recognitions.slice(0, 6).map((r, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span aria-hidden className="text-lg">
+                    {icon(r.category)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p>
+                      <strong>{r.label}</strong> <span className="text-sm text-muted">· {formatShortDate(r.date)}</span>
+                    </p>
+                    {r.note && <p className="text-sm text-ink/80">{r.note}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
         )}
 
         <Card>
@@ -47,9 +119,7 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
                 <Stat value={a.days - a.absences} label={`de ${a.days} días asistió`} />
               </div>
               <p className="mt-3 text-muted">
-                {a.absences === 0
-                  ? `${o.student.first_name} no ha faltado en este periodo.`
-                  : `Última falta: ${formatDate(a.last_absence!)}. Cada día de clase cuenta; si hay un motivo, avise a la escuela.`}
+                {a.absences === 0 ? `${name} no ha faltado en este periodo.` : `Última falta: ${formatDate(a.last_absence!)}. Cada día de clase cuenta; si hay un motivo, avise a la escuela.`}
               </p>
             </>
           ) : (
@@ -61,42 +131,47 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
           <h2 className="font-semibold">Calificaciones{o.grades[0] ? ` · ${o.grades[0].period}` : ""}</h2>
           {o.grades.length ? (
             <ul className="mt-2 divide-y divide-line">
-              {o.grades.map((g) => (
-                <li key={g.subject} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="font-medium">{g.subject}</p>
-                    <Trend delta={g.delta} />
-                  </div>
-                  <span className="num text-2xl font-bold">{formatScore(g.score)}</span>
-                </li>
-              ))}
+              {o.grades.map((g) => {
+                const pts = history.get(g.subject) ?? [];
+                return (
+                  <li key={g.subject} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="font-medium">{g.subject}</p>
+                      <Trend delta={g.delta} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Sparkline values={pts.map((p) => Number(p.score))} labels={pts.map((p) => p.period)} />
+                      <span className="num w-10 text-right text-2xl font-bold">{formatScore(g.score)}</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-2 text-muted">Las calificaciones aparecen cuando la maestra o el maestro las capture.</p>
           )}
-          <p className="mt-2 text-sm text-muted">La flecha compara con el periodo anterior de {o.student.first_name}, no con otros alumnos.</p>
+          <p className="mt-2 text-sm text-muted">Se compara a {name} con su periodo anterior, nunca con otros alumnos.</p>
         </Card>
 
-        <Card>
-          <h2 className="font-semibold">Tareas sin entregar (últimos 30 días)</h2>
-          {o.pending_work.length ? (
-            <ul className="mt-2 space-y-2">
-              {o.pending_work.map((w, i) => (
-                <li key={i} className="flex items-start justify-between gap-3">
-                  <span>
-                    {w.title} <span className="text-muted">· {w.subject}</span>
-                  </span>
-                  <Badge tone="care">{formatShortDate(w.due_on)}</Badge>
+        <Card id="conducta">
+          <h2 className="font-semibold">Conducta (últimos 60 días)</h2>
+          {o.behavior.length ? (
+            <ul className="mt-2 divide-y divide-line">
+              {o.behavior.map((b) => (
+                <li key={b.id} className="py-3">
+                  <p className="flex items-center gap-2 text-sm">
+                    <Badge tone={b.involvement === "afectado" ? "neutral" : b.severity === "minor" ? "muted" : "care"}>{b.involvement === "afectado" ? "Aviso" : SEVERITY[b.severity]}</Badge>
+                    <span className="text-muted">{formatDate(b.date)}</span>
+                  </p>
+                  <p className="mt-1">{b.text}</p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-muted">Ninguna. Entregó todo lo que se pidió.</p>
+            <p className="mt-2 text-muted">Sin reportes. Siga reconociendo en casa lo que hace bien.</p>
           )}
-          {o.pending_work.length > 0 && (
-            <p className="mt-3 text-sm text-muted">
-              Sugerencia: pregunte qué parte se le complicó y acuerden un horario fijo para hacer la tarea. No hace falta hacerla por él o ella.
-            </p>
+          {o.behavior.some((b) => b.involvement === "involucrado") && (
+            <p className="mt-2 text-sm text-muted">Sugerencia: platiquen qué pasó y qué podría hacer distinto la próxima vez, sin castigos en caliente. Si quiere hablar con la escuela, pida una cita en dirección.</p>
           )}
         </Card>
 
@@ -124,10 +199,28 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
             </div>
           ) : (
             <div className="mt-2">
-              <GoalForm studentId={id} firstName={o.student.first_name} />
+              <GoalForm studentId={id} firstName={name} />
             </div>
           )}
         </Card>
+
+        {o.pending_work.length > 0 && (
+          <Card>
+            <details>
+              <summary className="cursor-pointer font-semibold">Detalle de actividades sin entregar ({o.pending_work.length})</summary>
+              <ul className="mt-2 space-y-2">
+                {o.pending_work.map((w, i) => (
+                  <li key={i} className="flex items-start justify-between gap-3 text-sm">
+                    <span>
+                      {w.title} <span className="text-muted">· {w.subject}</span>
+                    </span>
+                    <span className="shrink-0 text-muted">{formatShortDate(w.due_on)}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </Card>
+        )}
 
         {o.summaries.length > 1 && (
           <Card>
@@ -143,7 +236,6 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
             </ul>
           </Card>
         )}
-        <p className="text-center text-sm text-muted">{plural(o.behavior_month, "reporte", "reportes")} de conducta en los últimos 30 días. Si tiene dudas, escriba a la escuela.</p>
       </div>
     </>
   );

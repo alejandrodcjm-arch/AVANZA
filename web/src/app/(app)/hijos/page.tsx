@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card, Empty, PageHeader } from "@/components/ui";
+import { WeekStrip } from "@/components/week-strip";
 import { requireRole } from "@/lib/auth";
 import { plural } from "@/lib/format";
 import type { Overview } from "@/lib/overview";
@@ -36,13 +37,16 @@ export default async function ChildrenPage() {
                     <h2 className="text-xl font-bold">{o!.student.first_name}</h2>
                     <span className="text-muted">{o!.group?.label}</span>
                   </div>
-                  <p className="mt-1 text-muted">
+                  <div className="mt-3">
+                    <WeekStrip days={o!.week.days} today={today} />
+                  </div>
+                  <p className="mt-3 text-muted">
                     {o!.attendance && o!.attendance.days > 0
                       ? o!.attendance.absences === 0
                         ? `Sin faltas en el ${o!.period?.name ?? "periodo"}.`
                         : `${plural(o!.attendance.absences, "falta", "faltas")} en el ${o!.period?.name ?? "periodo"}.`
                       : "Aún no hay asistencia registrada."}
-                    {o!.pending_work.length > 0 && ` ${plural(o!.pending_work.length, "tarea pendiente", "tareas pendientes")}.`}
+                    {o!.week.pending.some((p) => p.count > 0) && ` ${plural(o!.week.pending.reduce((t, p) => t + p.count, 0), "trabajo pendiente", "trabajos pendientes")} esta semana.`}
                   </p>
                 </Card>
               </Link>

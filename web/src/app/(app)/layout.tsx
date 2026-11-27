@@ -12,7 +12,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/cuenta", label: "Cuenta", icon: "user" },
   ],
   teacher: [
-    { href: "/maestro", label: "Hoy", icon: "home" },
+    { href: "/maestro", label: "Mi semana", icon: "home" },
     { href: "/maestro/alertas", label: "Apoyo", icon: "flag" },
     { href: "/maestro/resumenes", label: "Resúmenes", icon: "doc" },
     { href: "/avisos", label: "Avisos", icon: "bell" },

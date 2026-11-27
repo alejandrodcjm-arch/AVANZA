@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, Empty, PageHeader } from "@/components/ui";
+import { Card, Empty } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { formatShortDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -24,7 +24,8 @@ export default async function AssignmentsPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader title={`Tareas ${group.label}`} subtitle="Solo marque a quien NO entregó; los demás cuentan como entregados." back="/maestro" />
+      <h2 className="mb-1 text-lg font-semibold">Actividades una por una</h2>
+      <p className="mb-3 text-muted">Opcional. Lo más rápido es el corte semanal o subir su Excel. Solo marque a quien NO entregó.</p>
       <Card>
         <NewAssignment groupId={id} subjects={group.subjects} today={todayLocal()} />
       </Card>
