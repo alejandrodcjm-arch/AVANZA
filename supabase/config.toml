@@ -1,0 +1,57 @@
+# Configuración para Supabase CLI (desarrollo local y CI). En producción, replique estos valores
+# en el panel de Supabase (Authentication > Providers / Email Templates / Rate Limits).
+project_id = "avanza"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/confirm"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Nadie se registra solo: las cuentas las crea la escuela (invitación o alta de personal).
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.rate_limit]
+email_sent = 30
+token_verifications = 30
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = true
+enable_confirmations = false
+otp_length = 6
+otp_expiry = 900
+max_frequency = "30s"
+
+[auth.email.template.magic_link]
+subject = "Su código para entrar a Avanza: {{ .Token }}"
+content_path = "./supabase/templates/codigo.html"
+
+[auth.email.template.confirmation]
+subject = "Su código para entrar a Avanza: {{ .Token }}"
+content_path = "./supabase/templates/codigo.html"
