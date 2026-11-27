@@ -46,7 +46,9 @@ test("la maestra pasa lista tocando solo las excepciones", async ({ page }) => {
   await expect(page.getByText(/· 1 falta ·/)).toBeVisible();
   await page.getByRole("button", { name: /Guardar/ }).click();
   // Si falla, el mensaje real queda en el reporte.
-  await expect(page.getByRole("status").or(page.getByRole("alert")).last()).toHaveText("Lista guardada.");
+  const msg = page.getByText(/^(Lista guardada\.|No se pudo.*|No da clase.*|Datos incompletos\.|No se puede.*)$/);
+  await expect(msg).toBeVisible({ timeout: 10_000 });
+  await expect(msg).toHaveText("Lista guardada.");
 });
 
 test("la maestra ve señales de apoyo con números y no puede ver el tablero del director", async ({ page }) => {
