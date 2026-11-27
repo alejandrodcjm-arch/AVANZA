@@ -80,9 +80,11 @@ export default async function TeacherHome() {
           groups.map((g) => (
             <Card key={g.id}>
               <div className="flex items-baseline justify-between gap-2">
-                <Link href={`/maestro/grupos/${g.id}`} className="text-xl font-bold text-ink">
-                  {g.label}
-                </Link>
+                <h2 className="text-xl font-bold">
+                  <Link href={`/maestro/grupos/${g.id}`} className="text-ink">
+                    {g.label}
+                  </Link>
+                </h2>
                 <span className="text-sm text-muted">{count.get(g.id) ?? 0} alumnos</span>
               </div>
               <p className="text-sm text-muted">{g.subjects.map((s) => s.name).join(" · ")}</p>

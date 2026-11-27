@@ -11,7 +11,7 @@ test("papá con aviso aceptado ve a sus dos hijos con números exactos y sin com
   await expect(page.getByRole("heading", { name: "Luis" })).toBeVisible();
   await page.getByRole("heading", { name: "Natalia" }).click();
   await expect(page.getByRole("heading", { name: /Asistencia en el/ })).toBeVisible();
-  await expect(page.getByText(/no con otros alumnos/)).toBeVisible();
+  await expect(page.getByText(/nunca con otros alumnos/)).toBeVisible();
   const body = (await page.locator("main").innerText()).toLowerCase();
   for (const word of ["promedio del grupo", "en riesgo", "lugar en el grupo", "ranking"]) expect(body).not.toContain(word);
 });
